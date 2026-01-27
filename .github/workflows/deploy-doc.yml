@@ -1,0 +1,59 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# 允许一个并发的部署
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  buildDoc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        # 如果您的存储库有子模块，请取消注释
+        # submodules: true
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Check npm version
+      run: |
+        echo "📦 当前 npm 版本："
+        npm --version
+        echo "✅ 使用 npm 进行构建"
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build Doc
+      run: npm run docs
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./Build/Documentation
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+      # 仅在 main 分支推送时部署
+      if: github.ref == 'refs/heads/main'
