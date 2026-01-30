@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 interface Tool {
   id: string
@@ -7,6 +10,8 @@ interface Tool {
   description: string
   icon: string
   category: string
+  route?: string
+  available?: boolean
 }
 
 const tools: Tool[] = [
@@ -15,56 +20,65 @@ const tools: Tool[] = [
     name: 'GeoJSON 转换',
     description: '支持多种GIS格式的双向转换',
     icon: '🗺️',
-    category: '格式转换'
+    category: '格式转换',
+    available: false
   },
   {
     id: 'kml-convert',
     name: 'KML/KMZ 转换',
     description: 'Google Earth 格式转换工具',
     icon: '📍',
-    category: '格式转换'
+    category: '格式转换',
+    available: false
   },
   {
     id: 'shp-convert',
     name: 'Shapefile 转换',
     description: 'ESRI Shapefile 格式处理',
     icon: '📊',
-    category: '格式转换'
+    category: '格式转换',
+    route: '/tools/shp-convert',
+    available: true
   },
   {
     id: 'geojson-validate',
     name: 'GeoJSON 验证',
     description: '验证和修复 GeoJSON 文件',
     icon: '✅',
-    category: '数据处理'
+    category: '数据处理',
+    available: false
   },
   {
     id: 'coordinate-convert',
     name: '坐标转换',
     description: '多种坐标系统转换',
     icon: '🎯',
-    category: '坐标系统'
+    category: '坐标系统',
+    available: false
   },
   {
     id: 'geojson-viewer',
     name: 'GeoJSON 查看器',
     description: '在线预览 GeoJSON 数据',
     icon: '👁️',
-    category: '数据查看'
+    category: '数据查看',
+    available: false
   },
   {
     id: 'geojson-editor',
     name: 'GeoJSON 编辑器',
     description: '在线编辑 GeoJSON 文件',
     icon: '✏️',
-    category: '数据编辑'
+    category: '数据编辑',
+    available: false
   },
   {
     id: 'geojson-minify',
     name: 'GeoJSON 压缩',
     description: '压缩和优化 GeoJSON 文件',
     icon: '📦',
-    category: '数据处理'
+    category: '数据处理',
+    available: false
   }
 ]
 
@@ -77,6 +91,14 @@ const filteredTools = computed(() => {
   }
   return tools.filter(tool => tool.category === activeCategory.value)
 })
+
+const handleToolClick = (tool: Tool) => {
+  if (tool.available && tool.route) {
+    router.push(tool.route)
+  } else {
+    alert('该功能正在开发中，敬请期待！')
+  }
+}
 </script>
 
 <template>
@@ -156,6 +178,8 @@ const filteredTools = computed(() => {
           v-for="tool in filteredTools"
           :key="tool.id"
           class="tool-card"
+          :class="{ 'available': tool.available, 'unavailable': !tool.available }"
+          @click="handleToolClick(tool)"
         >
           <div class="tool-icon">{{ tool.icon }}</div>
           <div class="tool-content">
@@ -164,7 +188,7 @@ const filteredTools = computed(() => {
             <p class="tool-description">{{ tool.description }}</p>
           </div>
           <button class="tool-btn">
-            <span>立即使用</span>
+            <span>{{ tool.available ? '立即使用' : '敬请期待' }}</span>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4.16699 10H15.8337M15.8337 10L9.16699 3.33333M15.8337 10L9.16699 16.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -561,6 +585,26 @@ const filteredTools = computed(() => {
   padding: 2rem;
   transition: all 0.3s ease;
   overflow: hidden;
+  cursor: pointer;
+}
+
+.tool-card.available:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);
+}
+
+.tool-card.unavailable {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tool-card.unavailable:hover {
+  transform: none;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
 }
 
 .tool-card::before {
@@ -577,6 +621,10 @@ const filteredTools = computed(() => {
   );
   opacity: 0;
   transition: opacity 0.3s ease;
+}
+
+.tool-card.available:hover::before {
+  opacity: 1;
 }
 
 .tool-card:hover {
