@@ -34,3 +34,22 @@ coverage
 
 # Vitest
 __screenshots__/
+
+# Python backend
+GisTools/__pycache__/
+GisTools/*.py[cod]
+GisTools/$py.class
+GisTools/*.so
+GisTools/.Python
+GisTools/env/
+GisTools/venv/
+GisTools/ENV/
+GisTools/env.bak/
+GisTools/venv.bak/
+GisTools/.venv
+GisTools/uploads/
+GisTools/temp/
+GisTools/*.log
+GisTools/.env.local
+GisTools/.env.production
+
