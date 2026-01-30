@@ -12,7 +12,15 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 from app.core.config import settings
-from app.services.shp_service import ShpConverter
+
+# 尝试导入真实服务，如果失败则使用Mock版本
+try:
+    from app.services.shp_service import ShpConverter
+    print("[INFO] Using GDAL service")
+except ImportError:
+    from app.services.shp_service_mock import ShpConverter
+    print("[WARNING] GDAL not installed, using Mock service (for testing only)")
+    print("[INFO] Install GDAL: run 'pip install gdal' or see INSTALL_WINDOWS.md")
 
 router = APIRouter()
 

@@ -19,7 +19,39 @@ GIS工具箱后端服务，基于 Python 和 GDAL 实现多种GIS数据处理功
 
 ## 安装依赖
 
+### Windows 用户（推荐）
+
+如果安装GDAL遇到问题，请参考 [INSTALL_WINDOWS.md](INSTALL_WINDOWS.md) 获取详细指南。
+
+#### 方式一：使用 Conda（最简单）
+
 ```bash
+conda create -name gistools python=3.11
+conda activate gistools
+conda install -c conda-forge gdal
+pip install -r requirements.txt
+```
+
+#### 方式二：直接安装（可能失败）
+
+```bash
+pip install gdal
+pip install -r requirements.txt
+```
+
+**注意**：如果 `pip install gdal` 失败，系统会自动使用 Mock 模式（仅用于测试）。
+
+### Linux/Mac 用户
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install gdal-bin libgdal-dev
+pip install gdal
+pip install -r requirements.txt
+
+# macOS
+brew install gdal
+pip install gdal
 pip install -r requirements.txt
 ```
 
@@ -30,6 +62,16 @@ python main.py
 ```
 
 服务将在 http://localhost:8000 启动
+
+### 关于 GDAL Mock 模式
+
+如果未安装 GDAL，系统会自动使用 Mock 模式：
+- 生成示例数据用于测试
+- 可以正常启动服务
+- 无法处理真实的 SHP 文件
+- 启动时会显示警告信息
+
+建议安装完整的 GDAL 以使用全部功能。
 
 ## API文档
 
