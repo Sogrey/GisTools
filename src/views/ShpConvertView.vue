@@ -1,3 +1,186 @@
+
+
+<template>
+  <div class="container">
+    <!-- 头部 -->
+    <header class="header">
+      <button class="back-btn" @click="goBack">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4.16699 10H15.8337M15.8337 10L9.16699 3.33333M15.8337 10L9.16699 16.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 10 10)"/>
+        </svg>
+        返回首页
+      </button>
+      <h1 class="page-title">SHP 转换为 GeoJSON</h1>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="main-content">
+      <!-- 上传区域 -->
+      <div class="upload-section">
+        <!-- 样例文件下载提示 -->
+        <div class="sample-download">
+          <span class="sample-text">没有 SHP 文件？</span>
+          <button class="sample-link" @click="downloadSample">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 13.3333V3.33333M10 13.3333L6.66667 10M10 13.3333L13.3333 10M3.33333 16.6667H16.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            下载样例文件
+          </button>
+        </div>
+
+        <div
+          class="upload-zone"
+          :class="{ 'dragging': isDragging, 'has-file': selectedFile }"
+          @dragover.prevent="isDragging = true"
+          @dragleave.prevent="isDragging = false"
+          @drop="handleDrop"
+          @click="$refs.fileInput?.click()"
+        >
+          <input
+            ref="fileInput"
+            type="file"
+            accept=".shp"
+            @change="handleFileSelect"
+            style="display: none"
+          />
+
+          <div v-if="!selectedFile" class="upload-prompt">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">
+              <p>拖拽文件到此处或点击上传</p>
+              <p class="upload-hint">仅支持 .shp 格式文件</p>
+            </div>
+          </div>
+
+          <div v-else class="file-info">
+            <div class="file-icon">📄</div>
+            <div class="file-details">
+              <div class="file-name">{{ fileInfo.name }}</div>
+              <div class="file-meta">{{ formattedFileSize }}</div>
+            </div>
+            <button class="remove-btn" @click.stop="removeFile">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4.16699 4.16666L15.8337 15.8333M4.16699 15.8333L15.8337 4.16666" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 配置区域 -->
+      <div class="config-section" v-if="selectedFile">
+        <h2 class="section-title">转换配置</h2>
+
+        <div class="form-group">
+          <label class="form-label">文件编码</label>
+          <select v-model="encoding" class="form-select">
+            <option v-for="enc in encodingOptions" :key="enc.value" :value="enc.value">
+              {{ enc.label }}
+            </option>
+          </select>
+          <p class="form-hint">选择正确的编码以确保中文字符正确显示</p>
+        </div>
+
+        <!-- 提示信息 -->
+        <div class="info-box">
+          <div class="info-icon">ℹ️</div>
+          <div class="info-content">
+            <p><strong>说明：</strong>Shapefile 文件通常包含多个相关文件（.shp主文件、.shx索引文件、.dbf属性文件、.prj投影文件等）。转换时请确保这些文件在同一目录下。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="actions" v-if="selectedFile">
+        <button
+          class="btn btn-primary"
+          :disabled="uploading"
+          @click="uploadFile"
+        >
+          <span v-if="!uploading">开始转换</span>
+          <span v-else>转换中... {{ progress }}%</span>
+        </button>
+        <button
+          class="btn btn-secondary"
+          @click="resetForm"
+        >
+          重置
+        </button>
+      </div>
+
+      <!-- 进度条 -->
+      <div class="progress-section" v-if="uploading">
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: progress + '%' }"></div>
+        </div>
+      </div>
+
+      <!-- 结果区域 -->
+      <div class="result-section" v-if="result.success || result.error">
+        <div v-if="result.success" class="result-success">
+          <div class="result-icon">✅</div>
+          <div class="result-content">
+            <h3 class="result-title">转换成功！</h3>
+            <p class="result-message">{{ result.message }}</p>
+            <div class="result-stats">
+              <div class="stat-item">
+                <div class="stat-label">要素数量</div>
+                <div class="stat-value">{{ result.featureCount }}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">文件大小</div>
+                <div class="stat-value">{{ formatFileSize(result.fileSize) }}</div>
+              </div>
+            </div>
+            <button class="btn btn-download" @click="downloadFile">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 13.3333V3.33333M10 13.3333L6.66667 10M10 13.3333L13.3333 10M3.33333 16.6667H16.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              下载 GeoJSON 文件
+            </button>
+          </div>
+        </div>
+
+        <div v-if="result.error" class="result-error">
+          <div class="result-icon">❌</div>
+          <div class="result-content">
+            <h3 class="result-title">转换失败</h3>
+            <p class="result-message">{{ result.error }}</p>
+            <button class="btn btn-secondary" @click="resetForm">
+              重试
+            </button>
+          </div>
+        </div>
+      </div>
+
+    <!-- 使用说明 -->
+    <section class="info-section" v-if="!result.success">
+      <h2 class="section-title">使用说明</h2>
+      <div class="info-content">
+        <h3 class="info-heading">什么是 Shapefile (SHP)?</h3>
+        <p class="info-text">
+          Shapefile 是 ESRI 公司开发的一种矢量数据交换格式，是地理信息系统（GIS）中最常用的数据格式之一。
+          它由多个文件组成，包含地理要素的几何形状、属性数据和坐标系统信息。
+        </p>
+
+        <h3 class="info-heading">什么是 GeoJSON?</h3>
+        <p class="info-text">
+          GeoJSON 是一种基于 JSON 的地理数据格式，用于编码各种地理数据结构。
+          它广泛应用于 Web 地图应用（如 Leaflet、OpenLayers、Mapbox 等）中。
+        </p>
+
+        <h3 class="info-heading">为什么要转换?</h3>
+        <ul class="info-list">
+          <li><strong>Web 兼容性：</strong>GeoJSON 可以直接在 Web 地图中使用，而 Shapefile 需要特殊处理。</li>
+          <li><strong>可读性：</strong>GeoJSON 是文本格式，易于阅读和编辑；Shapefile 是二进制格式。</li>
+          <li><strong>跨平台：</strong>GeoJSON 文件可以在不同平台间轻松传输和共享。</li>
+          <li><strong>数据可视化：</strong>许多可视化工具和地图库都支持 GeoJSON 格式。</li>
+        </ul>
+      </div>
+    </section>
+    </main>
+  </div>
+</template>
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
@@ -27,7 +210,12 @@ const fileInfo = reactive({
 
 // 编码选项
 const encoding = ref('UTF-8')
-const encodingOptions = ['UTF-8', 'GBK', 'GB2312', 'BIG5']
+const encodingOptions = [
+  { value: 'UTF-8', label: 'UTF-8 (通用)' },
+  { value: 'GBK', label: 'GBK (简体中文)' },
+  { value: 'GB2312', label: 'GB2312 (国标)' },
+  { value: 'BIG5', label: 'BIG5 (繁体中文)' }
+]
 
 // 拖拽上传
 const isDragging = ref(false)
@@ -105,46 +293,76 @@ const uploadFile = async () => {
   result.error = ''
 
   try {
+    console.log('[前端] 开始上传文件:', selectedFile.value.name)
+    console.log('[前端] 文件大小:', selectedFile.value.size)
+    console.log('[前端] 编码:', encoding.value)
+
     const formData = new FormData()
     formData.append('file', selectedFile.value)
     formData.append('encoding', encoding.value)
 
-    // 上传到Python后端
-    const response = await fetch('http://localhost:8000/api/shp/to-geojson', {
-      method: 'POST',
-      body: formData,
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          progress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-        }
+    console.log('[前端] 准备发送请求到: http://localhost:8001/api/shp/to-geojson')
+
+    // 使用 XMLHttpRequest 获取上传进度
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', 'http://localhost:8001/api/shp/to-geojson', true)
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded * 100) / event.total)
+        progress.value = percent
+        console.log('[前端] 上传进度:', percent + '%')
       }
-    })
-
-    if (!response.ok) {
-      throw new Error('转换失败')
     }
 
-    const data = await response.json()
+    xhr.onload = () => {
+      console.log('[前端] 响应状态:', xhr.status)
+      console.log('[前端] 响应内容:', xhr.responseText)
 
-    result.success = data.success
-    result.message = data.message
-    result.featureCount = data.feature_count || 0
-    result.fileSize = data.file_size || 0
-    result.downloadUrl = data.success ? `http://localhost:8000${data.download_url}` : ''
-    result.error = data.error || ''
+      if (xhr.status === 200) {
+        try {
+          const data = JSON.parse(xhr.responseText)
+          console.log('[前端] 解析后数据:', data)
 
-    if (data.success) {
-      progress.value = 100
-    } else {
-      throw new Error(data.error || '转换失败')
+          result.success = data.success
+          result.message = data.message
+          result.featureCount = data.feature_count || 0
+          result.fileSize = data.file_size || 0
+          result.downloadUrl = data.success ? `http://localhost:8001${data.download_url}` : ''
+          result.error = data.error || ''
+
+          if (data.success) {
+            progress.value = 100
+            console.log('[前端] 转换成功!')
+          } else {
+            throw new Error(data.error || '转换失败')
+          }
+        } catch (parseError) {
+          console.error('[前端] JSON解析失败:', parseError)
+          throw new Error('服务器返回数据格式错误')
+        }
+      } else {
+        throw new Error(`服务器错误: ${xhr.status}`)
+      }
+      uploading.value = false
     }
+
+    xhr.onerror = (error) => {
+      console.error('[前端] 请求错误:', error)
+      result.success = false
+      result.error = '网络错误，请检查后端服务是否启动'
+      progress.value = 0
+      uploading.value = false
+    }
+
+    console.log('[前端] 发送请求...')
+    xhr.send(formData)
 
   } catch (error) {
-    console.error('上传失败:', error)
+    console.error('[前端] 上传失败:', error)
     result.success = false
     result.error = error instanceof Error ? error.message : '上传失败，请重试'
     progress.value = 0
-  } finally {
     uploading.value = false
   }
 }
@@ -166,153 +384,25 @@ const resetForm = () => {
 const goBack = () => {
   router.push('/')
 }
+
+// 下载样例文件
+const downloadSample = () => {
+  window.open('/GisTools/samples/hefei_xz.zip', '_blank')
+}
+
+// 格式化文件大小
+const formatFileSize = (bytes: number): string => {
+  if (!bytes) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  let size = bytes
+  let unitIndex = 0
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024
+    unitIndex++
+  }
+  return `${size.toFixed(2)} ${units[unitIndex]}`
+}
 </script>
-
-<template>
-  <div class="container">
-    <!-- 头部 -->
-    <header class="header">
-      <button class="back-btn" @click="goBack">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4.16699 10H15.8337M15.8337 10L9.16699 3.33333M15.8337 10L9.16699 16.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 10 10)"/>
-        </svg>
-        返回首页
-      </button>
-      <h1 class="page-title">Shapefile 转换为 GeoJSON</h1>
-    </header>
-
-    <!-- 主内容 -->
-    <main class="main-content">
-      <!-- 上传区域 -->
-      <div class="upload-section">
-        <div
-          class="upload-zone"
-          :class="{ 'dragging': isDragging, 'has-file': selectedFile }"
-          @dragover.prevent="isDragging = true"
-          @dragleave.prevent="isDragging = false"
-          @drop="handleDrop"
-          @click="$refs.fileInput?.click()"
-        >
-          <input
-            ref="fileInput"
-            type="file"
-            accept=".shp"
-            @change="handleFileSelect"
-            style="display: none"
-          />
-
-          <div v-if="!selectedFile" class="upload-prompt">
-            <div class="upload-icon">📁</div>
-            <div class="upload-text">
-              <p>拖拽文件到此处或点击上传</p>
-              <p class="upload-hint">仅支持 .shp 格式文件</p>
-            </div>
-          </div>
-
-          <div v-else class="file-info">
-            <div class="file-icon">📄</div>
-            <div class="file-details">
-              <div class="file-name">{{ fileInfo.name }}</div>
-              <div class="file-meta">{{ formattedFileSize }}</div>
-            </div>
-            <button class="remove-btn" @click.stop="removeFile">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4.16699 4.16666L15.8337 15.8333M4.16699 15.8333L15.8337 4.16666" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 配置区域 -->
-      <div class="config-section" v-if="selectedFile">
-        <h2 class="section-title">转换配置</h2>
-
-        <div class="form-group">
-          <label class="form-label">文件编码</label>
-          <select v-model="encoding" class="form-select">
-            <option v-for="enc in encodingOptions" :key="enc" :value="enc">
-              {{ enc }}
-            </option>
-          </select>
-          <p class="form-hint">选择正确的编码以确保中文等字符正确显示</p>
-        </div>
-
-        <!-- 提示信息 -->
-        <div class="info-box">
-          <div class="info-icon">ℹ️</div>
-          <div class="info-content">
-            <p><strong>注意：</strong>确保同目录下有 .shx、.dbf、.prj 等关联文件以获得完整转换结果。</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- 操作按钮 -->
-      <div class="actions" v-if="selectedFile">
-        <button
-          class="btn btn-primary"
-          :disabled="uploading"
-          @click="uploadFile"
-        >
-          <span v-if="!uploading">开始转换</span>
-          <span v-else>转换中... {{ progress }}%</span>
-        </button>
-        <button
-          class="btn btn-secondary"
-          @click="resetForm"
-        >
-          重置
-        </button>
-      </div>
-
-      <!-- 进度条 -->
-      <div class="progress-section" v-if="uploading">
-        <div class="progress-bar">
-          <div class="progress-fill" :style="{ width: progress + '%' }"></div>
-        </div>
-      </div>
-
-      <!-- 结果区域 -->
-      <div class="result-section" v-if="result.success || result.error">
-        <div v-if="result.success" class="result-success">
-          <div class="result-icon">✅</div>
-          <div class="result-content">
-            <h3 class="result-title">转换成功！</h3>
-            <p class="result-message">{{ result.message }}</p>
-            <div class="result-stats">
-              <div class="stat-item">
-                <div class="stat-label">要素数量</div>
-                <div class="stat-value">{{ result.featureCount }}</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-label">文件大小</div>
-                <div class="stat-value">{{ formatFileSize(result.fileSize) }}</div>
-              </div>
-            </div>
-            <button class="btn btn-download" @click="downloadFile">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 13.3333V3.33333M10 13.3333L6.66667 10M10 13.3333L13.3333 10M3.33333 16.6667H16.6667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              下载 GeoJSON 文件
-            </button>
-          </div>
-        </div>
-
-        <div v-if="result.error" class="result-error">
-          <div class="result-icon">❌</div>
-          <div class="result-content">
-            <h3 class="result-title">转换失败</h3>
-            <p class="result-message">{{ result.error }}</p>
-            <button class="btn btn-secondary" @click="resetForm">
-              重试
-            </button>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
-</template>
-
 <style scoped>
 .container {
   min-height: 100vh;
@@ -365,6 +455,47 @@ const goBack = () => {
 
 .upload-section {
   margin-bottom: 2rem;
+}
+
+.sample-download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: 8px;
+}
+
+.sample-text {
+  font-size: 0.875rem;
+  color: #a0a0a0;
+}
+
+.sample-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sample-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.sample-link svg {
+  flex-shrink: 0;
 }
 
 .upload-zone {
@@ -669,6 +800,56 @@ const goBack = () => {
   font-size: 1.5rem;
   font-weight: 700;
   color: #ffffff;
+}
+
+/* 使用说明区域 */
+.info-section {
+  max-width: 800px;
+  margin: 3rem auto 0;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.info-content {
+  line-height: 1.8;
+}
+
+.info-heading {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.info-text {
+  font-size: 0.9375rem;
+  color: #a0a0a0;
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+}
+
+.info-list li {
+  font-size: 0.9375rem;
+  color: #a0a0a0;
+  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+  position: relative;
+  line-height: 1.8;
+}
+
+.info-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #667eea;
+  font-weight: bold;
 }
 
 @media (max-width: 768px) {

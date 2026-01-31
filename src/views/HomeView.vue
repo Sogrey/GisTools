@@ -16,70 +16,41 @@ interface Tool {
 
 const tools: Tool[] = [
   {
-    id: 'geojson-convert',
-    name: 'GeoJSON 转换',
-    description: '支持多种GIS格式的双向转换',
-    icon: '🗺️',
-    category: '格式转换',
-    available: false
-  },
-  {
-    id: 'kml-convert',
-    name: 'KML/KMZ 转换',
-    description: 'Google Earth 格式转换工具',
-    icon: '📍',
-    category: '格式转换',
-    available: false
-  },
-  {
-    id: 'shp-convert',
-    name: 'Shapefile 转换',
-    description: 'ESRI Shapefile 格式处理',
+    id: 'shp2geojson',
+    name: 'SHP 转换为 GeoJSON',
+    description: '将 ESRI Shapefile 格式转换为 GeoJSON 格式',
     icon: '📊',
     category: '格式转换',
-    route: '/tools/shp-convert',
+    route: '/tools/shp2geojson',
+    available: true
+  },
+  {
+    id: 'geojson2shp',
+    name: 'GeoJSON 转换为 SHP',
+    description: '将 GeoJSON 格式转换为 ESRI Shapefile 格式',
+    icon: '🗺️',
+    category: '格式转换',
+    route: '/tools/geojson2shp',
+    available: true
+  },
+  {
+    id: 'csv2shp',
+    name: 'CSV 转换为 SHP',
+    description: '将 CSV 格式转换为 ESRI Shapefile 格式',
+    icon: '📋',
+    category: '格式转换',
+    route: '/tools/csv2shp',
     available: true
   },
   {
     id: 'geojson-validate',
-    name: 'GeoJSON 验证',
-    description: '验证和修复 GeoJSON 文件',
+    name: 'GeoJSON 格式验证',
+    description: '验证 GeoJSON 文件格式是否正确并检查 Geometry 有效性',
     icon: '✅',
-    category: '数据处理',
-    available: false
+    category: '数据质检',
+    route: '/tools/geojson-validate',
+    available: true
   },
-  {
-    id: 'coordinate-convert',
-    name: '坐标转换',
-    description: '多种坐标系统转换',
-    icon: '🎯',
-    category: '坐标系统',
-    available: false
-  },
-  {
-    id: 'geojson-viewer',
-    name: 'GeoJSON 查看器',
-    description: '在线预览 GeoJSON 数据',
-    icon: '👁️',
-    category: '数据查看',
-    available: false
-  },
-  {
-    id: 'geojson-editor',
-    name: 'GeoJSON 编辑器',
-    description: '在线编辑 GeoJSON 文件',
-    icon: '✏️',
-    category: '数据编辑',
-    available: false
-  },
-  {
-    id: 'geojson-minify',
-    name: 'GeoJSON 压缩',
-    description: '压缩和优化 GeoJSON 文件',
-    icon: '📦',
-    category: '数据处理',
-    available: false
-  }
 ]
 
 const categories = ['全部', '格式转换', '数据处理', '坐标系统', '数据查看', '数据编辑']

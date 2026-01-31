@@ -27,16 +27,24 @@ class ShpConverter:
             转换结果字典
         """
         try:
+            print(f"[服务] ========== 开始转换 =========")
+            print(f"[服务] 输入路径: {shp_path}")
+            print(f"[服务] 输出路径: {output_path}")
+            print(f"[服务] 编码: {encoding}")
+
             # 检查文件是否存在
             if not os.path.exists(shp_path):
+                print(f"[服务] 错误: 文件不存在")
                 return {
                     "success": False,
                     "error": f"SHP文件不存在: {shp_path}"
                 }
 
             # 打开SHP数据源
+            print(f"[服务] 打开SHP文件...")
             shp_data_source = ogr.Open(shp_path)
             if shp_data_source is None:
+                print(f"[服务] 错误: 无法打开文件")
                 return {
                     "success": False,
                     "error": f"无法打开SHP文件: {shp_path}"
@@ -44,6 +52,12 @@ class ShpConverter:
 
             # 获取图层
             shp_layer = shp_data_source.GetLayer()
+            layer_name = shp_layer.GetName()
+            feature_count = shp_layer.GetFeatureCount()
+            geometry_type = ogr.GeometryTypeToName(shp_layer.GetGeomType())
+            print(f"[服务] 图层名: {layer_name}")
+            print(f"[服务] 几何类型: {geometry_type}")
+            print(f"[服务] 要素数量: {feature_count}")
 
             # 构建GeoJSON结构
             geojson_data = {
@@ -91,6 +105,7 @@ class ShpConverter:
                 }
 
             # 写入输出文件
+            print(f"[服务] 写入输出文件...")
             output_dir = os.path.dirname(output_path)
             if output_dir:
                 os.makedirs(output_dir, exist_ok=True)
@@ -101,15 +116,24 @@ class ShpConverter:
             # 关闭数据源
             shp_data_source = None
 
+            file_size = os.path.getsize(output_path)
+            print(f"[服务] 转换完成!")
+            print(f"[服务] 要素总数: {feature_count}")
+            print(f"[服务] 输出文件大小: {file_size} bytes")
+            print(f"[服务] ========== 转换结束 =========")
+
             return {
                 "success": True,
                 "message": "转换成功",
                 "feature_count": feature_count,
                 "output_path": output_path,
-                "file_size": os.path.getsize(output_path)
+                "file_size": file_size
             }
 
         except Exception as e:
+            print(f"[服务] 异常: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return {
                 "success": False,
                 "error": f"转换失败: {str(e)}"

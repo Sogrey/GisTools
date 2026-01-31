@@ -11,9 +11,24 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/tools/shp-convert',
-      name: 'shp-convert',
+      path: '/tools/shp2geojson',
+      name: 'shp2geojson',
       component: ShpConvertView,
+    },
+    {
+      path: '/tools/geojson2shp',
+      name: 'geojson2shp',
+      component: () => import('../views/GeoJsonConvertView.vue').then(m => m.default),
+    },
+    {
+      path: '/tools/csv2shp',
+      name: 'csv2shp',
+      component: () => import('../views/CsvConvertView.vue').then(m => m.default),
+    },
+    {
+      path: '/tools/geojson-validate',
+      name: 'geojson-validate',
+      component: () => import('../views/GeoJsonValidateView.vue').then(m => m.default),
     },
   ],
 })

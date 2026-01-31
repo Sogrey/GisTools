@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # 后端服务
+  backend:
+    build:
+      context: ./GisTools
+      dockerfile: Dockerfile
+    container_name: gistools-backend
+    ports:
+      - "8001:8001"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8001
+      - ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+    volumes:
+      - ./GisTools/uploads:/app/uploads
+      - ./GisTools/temp:/app/temp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - gistools-network
+
+  # 前端开发服务器（可选）
+  frontend:
+    image: node:20
+    container_name: gistools-frontend
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      - VITE_API_URL=http://localhost:8001
+    depends_on:
+      - backend
+    networks:
+      - gistools-network
+
+networks:
+  gistools-network:
+    driver: bridge
+
+volumes:
+  uploads:
+  temp:

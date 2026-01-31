@@ -73,8 +73,14 @@ class ShpConverter:
             if output_dir:
                 os.makedirs(output_dir, exist_ok=True)
 
+            print(f"[Mock服务] 保存文件到: {output_path}")
+            print(f"[Mock服务] 目录存在: {os.path.exists(output_dir)}")
+            print(f"[Mock服务] 目录绝对路径: {os.path.abspath(output_dir)}")
+
             with open(output_path, "w", encoding=encoding) as f:
                 json.dump(geojson_data, f, ensure_ascii=False, indent=2)
+
+            print(f"[Mock服务] 文件已保存，大小: {os.path.getsize(output_path)} bytes")
 
             return {
                 "success": True,

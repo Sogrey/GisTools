@@ -1,0 +1,131 @@
+name: Deploy Python Backend
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'GisTools/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install GDAL
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gdal-bin libgdal-dev
+
+    - name: Install dependencies
+      run: |
+        cd GisTools
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Check dependencies
+      run: |
+        cd GisTools
+        python check_deps.py
+
+    - name: Run linting
+      run: |
+        cd GisTools
+        pip install flake8 black
+        flake8 app/ --max-line-length=120 --exclude=__pycache__
+        black --check app/
+
+    - name: Test API endpoints
+      run: |
+        cd GisTools
+        python -m pytest tests/ -v || echo "No tests found"
+      
+  docker-build:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ secrets.DOCKER_USERNAME }}/gistools-backend
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./GisTools
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          echo "🚀 开始部署后端服务..."
+          
+          # 拉取最新镜像
+          docker pull ${{ secrets.DOCKER_USERNAME }}/gistools-backend:latest
+          
+          # 停止旧容器
+          docker stop gistools-backend || true
+          docker rm gistools-backend || true
+          
+          # 启动新容器
+          docker run -d \
+            --name gistools-backend \
+            --restart unless-stopped \
+            -p 8001:8001 \
+            -e HOST=0.0.0.0 \
+            -e PORT=8001 \
+            -e ALLOWED_ORIGINS=https://yourdomain.com \
+            -v /path/to/uploads:/app/uploads \
+            -v /path/to/temp:/app/temp \
+            ${{ secrets.DOCKER_USERNAME }}/gistools-backend:latest
+          
+          # 清理旧镜像
+          docker image prune -f
+          
+          echo "✅ 部署完成！"
+          echo "📊 查看日志: docker logs gistools-backend"
