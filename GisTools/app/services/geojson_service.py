@@ -4,7 +4,7 @@ GeoJSON转换服务
 """
 import os
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from osgeo import ogr
 from osgeo import osr
 
@@ -187,7 +187,7 @@ class GeoJsonConverter:
                 }
 
             elif geojson_type == 'Feature':
-                print(f"[服务] 单个Feature")
+                print("[服务] 单个Feature")
 
                 # 处理单个Feature（包装为FeatureCollection）
                 wrapper = {
