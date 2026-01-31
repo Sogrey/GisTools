@@ -102,7 +102,7 @@ async def geojson_to_shp(
             shutil.rmtree(temp_dir, ignore_errors=True)
             raise HTTPException(status_code=400, detail=result["error"])
 
-        print(f"[后端] 转换成功!")
+        print("[后端] 转换成功!")
         print(f"[后端] 要素数量: {result['feature_count']}")
         print(f"[后端] 文件大小: {result['file_size']} bytes")
 
@@ -159,7 +159,7 @@ async def validate_geojson(
     - **file**: GeoJSON文件
     """
     try:
-        print(f"[后端] ========== 验证请求 =========")
+        print("[后端] ========== 验证请求 =========")
         print(f"[后端] 文件名: {file.filename}")
 
         # 检查文件扩展名

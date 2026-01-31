@@ -24,7 +24,7 @@ class GeoJsonConverter:
             转换结果字典
         """
         try:
-            print(f"[服务 Mock] ========== 开始转换 =========")
+            print("[服务 Mock] ========== 开始转换 =========")
             print(f"[服务 Mock] 输入路径: {geojson_path}")
             print(f"[服务 Mock] 输出路径: {output_path}")
             print(f"[服务 Mock] 编码: {encoding}")
@@ -38,7 +38,7 @@ class GeoJsonConverter:
                 }
 
             # 读取GeoJSON文件
-            print(f"[服务 Mock] 读取GeoJSON文件...")
+            print("[服务 Mock] 读取GeoJSON文件...")
             with open(geojson_path, 'r', encoding='utf-8') as f:
                 geojson_data = json.load(f)
 
@@ -137,7 +137,7 @@ class GeoJsonConverter:
             验证结果
         """
         try:
-            print(f"[质检 Mock] ========== 开始验证 =========")
+            print("[质检 Mock] ========== 开始验证 =========")
             print(f"[质检 Mock] 文件: {geojson_path}")
 
             # 检查文件是否存在
@@ -239,7 +239,7 @@ class GeoJsonConverter:
                         print(f"[质检 Mock] 边界框: {results['bounds']}")
 
             elif geojson_type == 'Feature':
-                print(f"[质检 Mock] 单个Feature")
+                print("[质检 Mock] 单个Feature")
                 results['feature_count'] = 1
 
                 geometry = geojson_data.get('geometry')
@@ -262,7 +262,7 @@ class GeoJsonConverter:
                 results['valid'] = False
                 results['error'] = f"不支持的GeoJSON类型: {geojson_type}"
 
-            print(f"[质检 Mock] ========== 验证完成 =========")
+            print("[质检 Mock] ========== 验证完成 =========")
             print(f"[质检 Mock] 有效: {results['valid']}")
             print(f"[质检 Mock] 错误数: {len(results['errors'])}")
             print(f"[质检 Mock] 警告数: {len(results['warnings'])}")

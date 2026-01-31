@@ -50,7 +50,7 @@ async def csv_to_shp(
     - **y_field**: Y坐标字段名（默认lat）
     """
     try:
-        print(f"[后端] ========== 收到请求 =========")
+        print("[后端] ========== 收到请求 =========")
         print(f"[后端] 请求来源: {request.client.host}")
         print(f"[后端] 文件名: {file.filename}")
         print(f"[后端] 文件大小: {file.size}")

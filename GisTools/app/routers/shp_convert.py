@@ -5,6 +5,7 @@ Shapefile转换路由
 import os
 import shutil
 import uuid
+from typing import Dict, Any
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Request
 from pydantic import BaseModel
 

@@ -315,7 +315,7 @@ class GeoJsonConverter:
                 results['valid_geometry_count'] = len(features) - invalid_count
 
             elif geojson_type == 'Feature':
-            print("[质检] 单个Feature")
+                print("[质检] 单个Feature")
                 results['feature_count'] = 1
 
                 geometry = geojson_data.get('geometry')

@@ -4,9 +4,8 @@ Shapefile转换服务
 """
 import os
 import json
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from osgeo import ogr
-from osgeo import osr
 
 
 class ShpConverter:
@@ -104,7 +103,7 @@ class ShpConverter:
                 }
 
             # 写入输出文件
-            print(f"[服务] 写入输出文件...")
+            print("[服务] 写入输出文件...")
             output_dir = os.path.dirname(output_path)
             if output_dir:
                 os.makedirs(output_dir, exist_ok=True)
