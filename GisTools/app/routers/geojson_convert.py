@@ -5,11 +5,8 @@ GeoJSON转换路由
 import os
 import shutil
 import uuid
-from pathlib import Path
-from typing import Dict, Any
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Request
-from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.core.config import settings
 
@@ -18,8 +15,8 @@ try:
     from app.services.geojson_service import GeoJsonConverter
     print("[INFO] Using GDAL service for GeoJSON")
     USE_GDAL = True
-except ImportError as e:
-    print(f"[WARNING] GDAL not available, using Mock service for GeoJSON")
+except ImportError:
+    print("[WARNING] GDAL not available, using Mock service for GeoJSON")
     from app.services.geojson_service_mock import GeoJsonConverter
     USE_GDAL = False
 
@@ -66,7 +63,7 @@ async def geojson_to_shp(
     - **encoding**: 输出编码
     """
     try:
-        print(f"[后端] ========== 收到请求 =========")
+        print("[后端] ========== 收到请求 =========")
         print(f"[后端] 请求来源: {request.client.host}")
         print(f"[后端] 文件名: {file.filename}")
         print(f"[后端] 文件大小: {file.size}")
@@ -74,7 +71,7 @@ async def geojson_to_shp(
 
         # 检查文件扩展名
         if not (file.filename.lower().endswith('.geojson') or file.filename.lower().endswith('.json')):
-            print(f"[后端] 错误: 文件扩展名不正确")
+            print("[后端] 错误: 文件扩展名不正确")
             raise HTTPException(status_code=400, detail="只支持.geojson或.json文件")
 
         # 创建临时目录
@@ -95,9 +92,9 @@ async def geojson_to_shp(
         print(f"[后端] 输出路径: {output_path}")
 
         # 执行转换
-        print(f"[后端] 开始转换...")
+        print("[后端] 开始转换...")
         if not USE_GDAL:
-            print(f"[后端] 注意：使用Mock模式，无法生成真正的Shapefile")
+            print("[后端] 注意：使用Mock模式，无法生成真正的Shapefile")
         result = GeoJsonConverter.geojson_to_shp(geojson_path, output_path, encoding)
 
         if not result["success"]:
@@ -116,7 +113,7 @@ async def geojson_to_shp(
 
         # Mock 模式下不提供下载链接
         if not USE_GDAL:
-            print(f"[后端] Mock模式：不提供下载链接")
+            print("[后端] Mock模式：不提供下载链接")
             return ConversionResponse(
                 success=True,
                 message="Mock转换成功（需要安装GDAL才能生成真正的Shapefile）",
@@ -130,7 +127,7 @@ async def geojson_to_shp(
         # 构造下载URL
         download_url = f"/api/download/{os.path.basename(output_path)}"
         print(f"[后端] 下载URL: {download_url}")
-        print(f"[后端] ========== 处理完成 =========")
+        print("[后端] ========== 处理完成 =========")
 
         return ConversionResponse(
             success=True,
@@ -179,9 +176,9 @@ async def validate_geojson(
             shutil.copyfileobj(file.file, buffer)
 
         # 执行验证
-        print(f"[后端] 开始验证...")
+        print("[后端] 开始验证...")
         if not USE_GDAL:
-            print(f"[后端] 注意：使用Mock模式")
+            print("[后端] 注意：使用Mock模式")
         result = GeoJsonConverter.validate_geojson(geojson_path)
 
         # 清理临时文件

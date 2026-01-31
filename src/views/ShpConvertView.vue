@@ -189,7 +189,6 @@ const router = useRouter()
 
 // 状态管理
 const uploading = ref(false)
-const converting = ref(false)
 const result = reactive({
   success: false,
   message: '',
@@ -199,8 +198,14 @@ const result = reactive({
   error: ''
 })
 
-// 文件上传
-const fileInput = ref<HTMLInputElement>()
+// 文件输入框引用
+const fileInput = ref<HTMLInputElement | null>(null)
+
+// 暴露给模板
+defineExpose({
+  fileInput
+})
+
 const selectedFile = ref<File | null>(null)
 const fileInfo = reactive({
   name: '',

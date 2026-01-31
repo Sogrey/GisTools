@@ -269,6 +269,14 @@ const validationResult = ref<ValidationResult | null>(null)
 // 拖拽上传
 const isDragging = ref(false)
 
+// 文件输入框引用
+const fileInput = ref<HTMLInputElement | null>(null)
+
+// 暴露给模板
+defineExpose({
+  fileInput
+})
+
 interface ValidationResult {
   valid: boolean
   type?: string

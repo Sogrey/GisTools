@@ -224,6 +224,14 @@ const result = reactive({
   useMock: false
 })
 
+// 文件输入框引用
+const fileInput = ref<HTMLInputElement | null>(null)
+
+// 暴露给模板
+defineExpose({
+  fileInput
+})
+
 const formattedFileSize = computed(() => {
   if (!fileInfo.size) return '0 B'
   const units = ['B', 'KB', 'MB', 'GB']

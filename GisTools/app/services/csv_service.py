@@ -4,8 +4,7 @@ CSV转换服务
 """
 import os
 import csv
-from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from osgeo import ogr
 from osgeo import osr
 
@@ -14,8 +13,10 @@ class CsvConverter:
     """CSV文件转换器"""
 
     @staticmethod
-    def csv_to_shp(csv_path: str, output_path: str, encoding: str = "UTF-8",
-                 x_field: str = "lon", y_field: str = "lat") -> Dict[str, Any]:
+    def csv_to_shp(
+        csv_path: str, output_path: str, encoding: str = "UTF-8",
+        x_field: str = "lon", y_field: str = "lat"
+    ) -> Dict[str, Any]:
         """
         将CSV文件转换为SHP格式
 
@@ -30,7 +31,7 @@ class CsvConverter:
             转换结果字典
         """
         try:
-            print(f"[服务] ========== 开始转换 =========")
+            print("[服务] ========== 开始转换 =========")
             print(f"[服务] 输入路径: {csv_path}")
             print(f"[服务] 输出路径: {output_path}")
             print(f"[服务] 编码: {encoding}")
@@ -38,7 +39,7 @@ class CsvConverter:
 
             # 检查文件是否存在
             if not os.path.exists(csv_path):
-                print(f"[服务] 错误: 文件不存在")
+                print("[服务] 错误: 文件不存在")
                 return {
                     "success": False,
                     "error": f"CSV文件不存在: {csv_path}"
@@ -56,7 +57,7 @@ class CsvConverter:
             os.makedirs(output_dir, exist_ok=True)
 
             # 读取CSV文件
-            print(f"[服务] 读取CSV文件...")
+            print("[服务] 读取CSV文件...")
             rows = []
             headers = []
 
@@ -101,7 +102,7 @@ class CsvConverter:
                         continue
 
             if not rows:
-                print(f"[服务] 错误: 没有有效的数据行")
+                print("[服务] 错误: 没有有效的数据行")
                 return {
                     "success": False,
                     "error": "CSV中没有有效的坐标数据"
@@ -110,7 +111,7 @@ class CsvConverter:
             print(f"[服务] 有效数据行数: {len(rows)}")
 
             # 创建Shapefile驱动
-            print(f"[服务] 创建驱动...")
+            print("[服务] 创建驱动...")
             driver = ogr.GetDriverByName('ESRI Shapefile')
 
             # 创建数据源
@@ -124,7 +125,7 @@ class CsvConverter:
             layer = data_source.CreateLayer(shp_basename, spatial_ref, ogr.wkbPoint)
 
             # 创建字段
-            print(f"[服务] 创建字段...")
+            print("[服务] 创建字段...")
             layer.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
 
             # 添加CSV中的其他字段
@@ -155,7 +156,7 @@ class CsvConverter:
                         layer.CreateField(ogr.FieldDefn(header, ogr.OFTString))
 
             # 添加要素到图层
-            print(f"[服务] 添加要素...")
+            print("[服务] 添加要素...")
             valid_count = 0
 
             for idx, row in enumerate(rows):
@@ -196,7 +197,7 @@ class CsvConverter:
                 except ValueError:
                     continue
 
-            print(f"[服务] ========== 转换完成 =========")
+            print("[服务] ========== 转换完成 =========")
             print(f"[服务] 有效要素数量: {valid_count}")
             print(f"[服务] 输出文件: {output_path}")
 

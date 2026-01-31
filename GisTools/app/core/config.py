@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings
 from typing import List
 import os
 
+
 class Settings(BaseSettings):
     # 服务配置
     HOST: str = "0.0.0.0"
@@ -35,6 +36,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+
 
 settings = Settings()
 

@@ -19,6 +19,7 @@ except ImportError:
     print("[WARNING] GDAL not installed, some features will use Mock mode")
     print("[INFO] See INSTALL_WINDOWS.md to install GDAL")
 
+
 # 生命周期管理
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -61,6 +62,7 @@ async def root():
         ]
     }
 
+
 # 健康检查
 @app.get("/health")
 async def health_check():
@@ -69,6 +71,7 @@ async def health_check():
         "gdal_installed": GDAL_VERSION is not None,
         "gdal_version": GDAL_VERSION
     }
+
 
 # 下载路由（全局）
 @app.get("/api/download/{filename}")
@@ -95,6 +98,7 @@ async def download_file(filename: str):
         media_type="application/json",
         filename=filename
     )
+
 
 # 注册路由
 app.include_router(shp_convert.router, prefix="/api/shp", tags=["Shapefile转换"])

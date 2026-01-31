@@ -4,8 +4,7 @@ Shapefile转换服务
 """
 import os
 import json
-from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from osgeo import ogr
 from osgeo import osr
 
@@ -27,24 +26,24 @@ class ShpConverter:
             转换结果字典
         """
         try:
-            print(f"[服务] ========== 开始转换 =========")
+            print("[服务] ========== 开始转换 =========")
             print(f"[服务] 输入路径: {shp_path}")
             print(f"[服务] 输出路径: {output_path}")
             print(f"[服务] 编码: {encoding}")
 
             # 检查文件是否存在
             if not os.path.exists(shp_path):
-                print(f"[服务] 错误: 文件不存在")
+                print("[服务] 错误: 文件不存在")
                 return {
                     "success": False,
                     "error": f"SHP文件不存在: {shp_path}"
                 }
 
             # 打开SHP数据源
-            print(f"[服务] 打开SHP文件...")
+            print("[服务] 打开SHP文件...")
             shp_data_source = ogr.Open(shp_path)
             if shp_data_source is None:
-                print(f"[服务] 错误: 无法打开文件")
+                print("[服务] 错误: 无法打开文件")
                 return {
                     "success": False,
                     "error": f"无法打开SHP文件: {shp_path}"
@@ -117,10 +116,10 @@ class ShpConverter:
             shp_data_source = None
 
             file_size = os.path.getsize(output_path)
-            print(f"[服务] 转换完成!")
+            print("[服务] 转换完成!")
             print(f"[服务] 要素总数: {feature_count}")
             print(f"[服务] 输出文件大小: {file_size} bytes")
-            print(f"[服务] ========== 转换结束 =========")
+            print("[服务] ========== 转换结束 =========")
 
             return {
                 "success": True,

@@ -4,7 +4,6 @@ GeoJSON转换服务 Mock 版本
 """
 import os
 import json
-from pathlib import Path
 from typing import Dict, Any
 
 
@@ -32,7 +31,7 @@ class GeoJsonConverter:
 
             # 检查文件是否存在
             if not os.path.exists(geojson_path):
-                print(f"[服务 Mock] 错误: 文件不存在")
+                print("[服务 Mock] 错误: 文件不存在")
                 return {
                     "success": False,
                     "error": f"GeoJSON文件不存在: {geojson_path}"
@@ -45,7 +44,7 @@ class GeoJsonConverter:
 
             # 检查GeoJSON格式
             if 'type' not in geojson_data:
-                print(f"[服务 Mock] 错误: 无效的GeoJSON格式")
+                print("[服务 Mock] 错误: 无效的GeoJSON格式")
                 return {
                     "success": False,
                     "error": "无效的GeoJSON格式"
@@ -105,7 +104,7 @@ class GeoJsonConverter:
                     "error": f"不支持的GeoJSON类型: {geojson_type}"
                 }
 
-            print(f"[服务 Mock] ========== 转换完成 =========")
+            print("[服务 Mock] ========== 转换完成 =========")
             print(f"[服务 Mock] 要素数量: {feature_count}")
 
             return {

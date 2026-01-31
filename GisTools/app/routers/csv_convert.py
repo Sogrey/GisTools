@@ -5,11 +5,8 @@ CSV转换路由
 import os
 import shutil
 import uuid
-from pathlib import Path
-from typing import Dict, Any
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, Request
-from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.core.config import settings
 
@@ -62,7 +59,7 @@ async def csv_to_shp(
 
         # 检查文件扩展名
         if not file.filename.lower().endswith('.csv'):
-            print(f"[后端] 错误: 文件扩展名不正确")
+            print("[后端] 错误: 文件扩展名不正确")
             raise HTTPException(status_code=400, detail="只支持.csv文件")
 
         # 创建临时目录
@@ -83,7 +80,7 @@ async def csv_to_shp(
         print(f"[后端] 输出路径: {output_path}")
 
         # 执行转换
-        print(f"[后端] 开始转换...")
+        print("[后端] 开始转换...")
         result = CsvConverter.csv_to_shp(csv_path, output_path, encoding, x_field, y_field)
 
         if not result["success"]:
@@ -91,7 +88,7 @@ async def csv_to_shp(
             shutil.rmtree(temp_dir, ignore_errors=True)
             raise HTTPException(status_code=400, detail=result["error"])
 
-        print(f"[后端] 转换成功!")
+        print("[后端] 转换成功!")
         print(f"[后端] 要素数量: {result['feature_count']}")
         print(f"[后端] 文件大小: {result['file_size']} bytes")
 
@@ -103,7 +100,7 @@ async def csv_to_shp(
         # 构造下载URL
         download_url = f"/api/download/{os.path.basename(output_path)}"
         print(f"[后端] 下载URL: {download_url}")
-        print(f"[后端] ========== 处理完成 =========")
+        print("[后端] ========== 处理完成 =========")
 
         return ConversionResponse(
             success=True,

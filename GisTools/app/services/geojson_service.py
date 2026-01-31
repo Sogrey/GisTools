@@ -4,7 +4,6 @@ GeoJSON转换服务
 """
 import os
 import json
-from pathlib import Path
 from typing import Dict, Any, Optional
 from osgeo import ogr
 from osgeo import osr
@@ -27,27 +26,27 @@ class GeoJsonConverter:
             转换结果字典
         """
         try:
-            print(f"[服务] ========== 开始转换 =========")
+            print("[服务] ========== 开始转换 =========")
             print(f"[服务] 输入路径: {geojson_path}")
             print(f"[服务] 输出路径: {output_path}")
             print(f"[服务] 编码: {encoding}")
 
             # 检查文件是否存在
             if not os.path.exists(geojson_path):
-                print(f"[服务] 错误: 文件不存在")
+                print("[服务] 错误: 文件不存在")
                 return {
                     "success": False,
                     "error": f"GeoJSON文件不存在: {geojson_path}"
                 }
 
             # 读取GeoJSON文件
-            print(f"[服务] 读取GeoJSON文件...")
+            print("[服务] 读取GeoJSON文件...")
             with open(geojson_path, 'r', encoding='utf-8') as f:
                 geojson_data = json.load(f)
 
             # 检查GeoJSON格式
             if 'type' not in geojson_data:
-                print(f"[服务] 错误: 无效的GeoJSON格式")
+                print("[服务] 错误: 无效的GeoJSON格式")
                 return {
                     "success": False,
                     "error": "无效的GeoJSON格式"
@@ -65,7 +64,7 @@ class GeoJsonConverter:
             os.makedirs(output_dir, exist_ok=True)
 
             # 从GeoJSON创建内存中的几何对象
-            print(f"[服务] 创建驱动...")
+            print("[服务] 创建驱动...")
             driver = ogr.GetDriverByName('ESRI Shapefile')
 
             # 创建数据源
@@ -79,7 +78,7 @@ class GeoJsonConverter:
                 print(f"[服务] FeatureCollection: {len(features)} 个要素")
 
                 if not features:
-                    print(f"[服务] 警告: 没有要素")
+                    print("[服务] 警告: 没有要素")
                     return {
                         "success": False,
                         "error": "GeoJSON中没有要素"
@@ -114,7 +113,7 @@ class GeoJsonConverter:
                             break
 
                 # 创建图层
-                print(f"[服务] 创建图层...")
+                print("[服务] 创建图层...")
                 spatial_ref = osr.SpatialReference()
                 spatial_ref.ImportFromEPSG(4326)  # WGS 84
 
@@ -125,7 +124,7 @@ class GeoJsonConverter:
                 )
 
                 # 定义字段
-                print(f"[服务] 创建字段...")
+                print("[服务] 创建字段...")
                 # 从第一个要素获取所有属性
                 first_feature = features[0]
                 properties = first_feature.get('properties', {})
@@ -142,7 +141,7 @@ class GeoJsonConverter:
                         layer.CreateField(ogr.FieldDefn(key, ogr.OFTString))
 
                 # 添加要素到图层
-                print(f"[服务] 添加要素...")
+                print("[服务] 添加要素...")
                 for idx, feature in enumerate(features):
                     geometry = feature.get('geometry')
                     properties = feature.get('properties', {})
@@ -174,7 +173,7 @@ class GeoJsonConverter:
                     layer.CreateFeature(feat)
 
                 feature_count = len(features)
-                print(f"[服务] ========== 转换完成 =========")
+                print("[服务] ========== 转换完成 =========")
                 print(f"[服务] 要素数量: {feature_count}")
                 print(f"[服务] 输出文件: {output_path}")
 
@@ -231,7 +230,7 @@ class GeoJsonConverter:
             验证结果
         """
         try:
-            print(f"[质检] ========== 开始验证 =========")
+            print("[质检] ========== 开始验证 =========")
             print(f"[质检] 文件: {geojson_path}")
 
             # 检查文件是否存在
@@ -316,7 +315,7 @@ class GeoJsonConverter:
                 results['valid_geometry_count'] = len(features) - invalid_count
 
             elif geojson_type == 'Feature':
-                print(f"[质检] 单个Feature")
+            print("[质检] 单个Feature")
                 results['feature_count'] = 1
 
                 geometry = geojson_data.get('geometry')
@@ -358,7 +357,7 @@ class GeoJsonConverter:
                     }
                     print(f"[质检] 边界框: {results['bounds']}")
 
-            print(f"[质检] ========== 验证完成 =========")
+            print("[质检] ========== 验证完成 =========")
             print(f"[质检] 有效: {results['valid']}")
             print(f"[质检] 错误数: {len(results['errors'])}")
             print(f"[质检] 警告数: {len(results['warnings'])}")
