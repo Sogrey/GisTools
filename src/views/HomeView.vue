@@ -15,45 +15,83 @@ interface Tool {
 }
 
 const tools: Tool[] = [
-  {
-    id: 'shp2geojson',
-    name: 'SHP 转换为 GeoJSON',
-    description: '将 ESRI Shapefile 格式转换为 GeoJSON 格式',
-    icon: '📊',
-    category: '格式转换',
-    route: '/tools/shp2geojson',
-    available: true
-  },
-  {
-    id: 'geojson2shp',
-    name: 'GeoJSON 转换为 SHP',
-    description: '将 GeoJSON 格式转换为 ESRI Shapefile 格式',
-    icon: '🗺️',
-    category: '格式转换',
-    route: '/tools/geojson2shp',
-    available: true
-  },
-  {
-    id: 'csv2shp',
-    name: 'CSV 转换为 SHP',
-    description: '将 CSV 格式转换为 ESRI Shapefile 格式',
-    icon: '📋',
-    category: '格式转换',
-    route: '/tools/csv2shp',
-    available: true
-  },
-  {
-    id: 'geojson-validate',
-    name: 'GeoJSON 格式验证',
-    description: '验证 GeoJSON 文件格式是否正确并检查 Geometry 有效性',
-    icon: '✅',
-    category: '数据质检',
-    route: '/tools/geojson-validate',
-    available: true
-  },
+  // === 格式转换 ===
+  { id: 'shp-toolbox', name: 'SHP 工具箱', description: 'SHP ↔ GeoJSON 双向转换，含元信息提取，支持纯前端解析与后端转换', icon: '📊', category: '格式转换', route: '/tools/shp-toolbox', available: true },
+  { id: 'table-convert', name: '表格转换工具', description: 'CSV/Excel ↔ GeoJSON 双向，自动识别经纬度列，支持度分秒与 BOM', icon: '📋', category: '格式转换', route: '/tools/table-convert', available: true },
+  { id: 'geojson-toolbox', name: 'GeoJSON 工具箱', description: '校验 / 美化压缩 / 坐标纠偏 / 元数据四合一', icon: '✅', category: '格式转换', route: '/tools/geojson-toolbox', available: true },
+  { id: 'kml-convert', name: 'KML 转换器', description: 'KML ↔ GeoJSON 双向转换，Placemark/几何/属性', icon: '🗺️', category: '格式转换', route: '/tools/kml-convert', available: true },
+  { id: 'wkt-wkb', name: 'WKT/WKB 工具箱', description: 'WKT ↔ GeoJSON 与 WKB/EWKB ↔ GeoJSON 双向，全几何类型+SRID', icon: '🔤', category: '格式转换', route: '/tools/wkt-wkb', available: true },
+  { id: 'dxf-tool', name: 'DXF 工具箱', description: 'DXF ↔ GeoJSON 双向转换，Point/Line/Polyline/Circle', icon: '📐', category: '格式转换', route: '/tools/dxf-tool', available: true },
+  { id: 'gpx-tool', name: 'GPX 工具箱', description: 'GPX ↔ GeoJSON 互转 + 轨迹统计（距离/爬升/速度）', icon: '🚴', category: '格式转换', route: '/tools/gpx-tool', available: true },
+  { id: 'topojson-convert', name: 'TopoJSON 转换', description: 'TopoJSON ↔ GeoJSON 互转，共享弧段去重，量化精度可调', icon: '🔗', category: '格式转换', route: '/tools/topojson-convert', available: true },
+  { id: 'polyline-codec', name: 'Polyline 编解码', description: 'Google Encoded Polyline 双向编解码，精度 5/6 位', icon: '〰️', category: '格式转换', route: '/tools/polyline-codec', available: true },
+  { id: 'geobuf-codec', name: 'GeoBuf 编解码', description: 'GeoJSON ↔ 压缩格式双向编解码，压缩率统计', icon: '📦', category: '格式转换', route: '/tools/geobuf-codec', available: true },
+  { id: 'osm-parser', name: 'OSM 解析器', description: 'OpenStreetMap .osm XML → GeoJSON，node/way/relation', icon: '🌍', category: '格式转换', route: '/tools/osm-parser', available: true },
+
+  // === 坐标系统 ===
+  { id: 'coord-workbench', name: '坐标转换工作台', description: 'WGS84/GCJ02/BD09/墨卡托/高斯/UTM/ECEF 七系互通，4 椭球', icon: '🧭', category: '坐标系统', route: '/tools/coord-workbench', available: true },
+  { id: 'band-lookup', name: '投影带速查', description: '经纬度 → 高斯 3°/6° 带号 + 中央经线 + UTM 带号', icon: '📐', category: '坐标系统', route: '/tools/band-lookup', available: true },
+  { id: 'epsg-lookup', name: 'EPSG 速查', description: '56 条常用 EPSG 坐标系对照表，WKT 定义复制', icon: '📚', category: '坐标系统', route: '/tools/epsg-lookup', available: true },
+  { id: 'seven-param', name: '七参数/四参数', description: 'Bursa-Wolf 七参数与四参数转换，公共点最小二乘反算', icon: '🔀', category: '坐标系统', route: '/tools/seven-param', available: true },
+  { id: 'coord-clean', name: '坐标清洗', description: '精度控制（截断/四舍五入）+ 去重清洗（去重/越界/离群）', icon: '🧹', category: '坐标系统', route: '/tools/coord-clean', available: true },
+  { id: 'reproject', name: '批量投影变换', description: 'GeoJSON 批量坐标投影变换 WGS84↔墨卡托↔GCJ02↔BD09', icon: '🔄', category: '坐标系统', route: '/tools/reproject', available: true },
+  { id: 'scale-calc', name: '比例尺计算', description: '比例尺 ↔ 地面分辨率互算，DPI，瓦片地面米数', icon: '📏', category: '坐标系统', route: '/tools/scale-calc', available: true },
+
+  // === 空间分析 ===
+  { id: 'spatial-analysis', name: '空间分析工具箱', description: '点在多边形/球面面积/几何中心/矩形边界/DP 抽稀', icon: '🔬', category: '空间分析', route: '/tools/spatial-analysis', available: true },
+  { id: 'overlay-analysis', name: '多边形叠加分析', description: '相交/并集/差集/对称差（Sutherland-Hodgman 裁剪）', icon: '⊕', category: '空间分析', route: '/tools/overlay-analysis', available: true },
+  { id: 'voronoi-triangulation', name: 'Voronoi/Delaunay 三角网', description: 'Bowyer-Watson 三角剖分 + Voronoi 对偶图', icon: '🔺', category: '空间分析', route: '/tools/voronoi-triangulation', available: true },
+  { id: 'convex-hull', name: '凸包计算', description: 'Andrew Monotone Chain O(n log n)，面积/周长统计', icon: '⬡', category: '空间分析', route: '/tools/convex-hull', available: true },
+  { id: 'nearest-neighbor', name: '最近邻搜索', description: 'KNN + 方位角 + Mutual NN，Haversine 距离', icon: '🎯', category: '空间分析', route: '/tools/nearest-neighbor', available: true },
+  { id: 'distance-matrix', name: '距离矩阵', description: 'N×N Haversine 距离矩阵 → CSV，最大/最小/平均统计', icon: '📊', category: '空间分析', route: '/tools/distance-matrix', available: true },
+  { id: 'h3-s2-grid', name: 'H3/S2 网格编码', description: 'Plus Codes + S2 Cell ID + H3 索引三合一', icon: '🌐', category: '空间分析', route: '/tools/h3-s2-grid', available: true },
+  { id: 'buffer-gen', name: '缓冲区生成', description: '点/线/多边形缓冲区（平面米制近似）', icon: '⭕', category: '空间分析', route: '/tools/buffer-gen', available: true },
+  { id: 'geohash', name: 'GeoHash 编解码', description: '经纬度 ↔ GeoHash 双向，精度 1-12，bbox+邻居', icon: '#️⃣', category: '空间分析', route: '/tools/geohash', available: true },
+  { id: 'line-resample', name: '线等距重采样', description: '等距加密/抽稀/按数量重采样 + Douglas-Peucker', icon: '📈', category: '空间分析', route: '/tools/line-resample', available: true },
+
+  // === 数据处理 ===
+  { id: 'feature-merge', name: '要素合并/拆分', description: 'FeatureCollection 合并/过滤/按属性分组拆分', icon: '🔀', category: '数据处理', route: '/tools/feature-merge', available: true },
+  { id: 'geojson-splitter', name: 'GeoJSON 分片', description: '按要素数/体积/属性值分片拆分大 GeoJSON', icon: '✂️', category: '数据处理', route: '/tools/geojson-splitter', available: true },
+  { id: 'vws-simplify', name: 'VWS 简化', description: 'Visvalingam-Whyatt 几何简化，面积/百分比模式', icon: '📉', category: '数据处理', route: '/tools/vws-simplify', available: true },
+  { id: 'field-calc', name: '属性字段计算器', description: '表达式计算新字段（Math/字符串/条件），预览+批量', icon: '🧮', category: '数据处理', route: '/tools/field-calc', available: true },
+  { id: 'dissolve', name: '按属性溶解', description: '按属性分组，同组相邻多边形合并', icon: '♒', category: '数据处理', route: '/tools/dissolve', available: true },
+  { id: 'geometry-flatten', name: '几何展平/合并', description: 'Multi* 展平为单要素，或反向合并', icon: '📚', category: '数据处理', route: '/tools/geometry-flatten', available: true },
+  { id: 'topology-check', name: '拓扑检查', description: '自相交/缝隙/重叠/环方向检查', icon: '🔍', category: '数据处理', route: '/tools/topology-check', available: true },
+  { id: 'map-sheet', name: '图幅编号计算', description: '经纬度↔图幅号互查，新旧标准对照', icon: '🗺️', category: '数据处理', route: '/tools/map-sheet', available: true },
+
+  // === 制图可视化 ===
+  { id: 'geojson-to-svg', name: 'GeoJSON → SVG', description: 'GeoJSON 渲染为 SVG 矢量图，可调投影/线宽/填充', icon: '🎨', category: '制图可视化', route: '/tools/geojson-to-svg', available: true },
+  { id: 'colormap', name: '色带生成器', description: '13 种预设色带，锚点插值 2-256 级，Cesium 代码片段', icon: '🌈', category: '制图可视化', route: '/tools/colormap', available: true },
+  { id: 'choropleth', name: '专题图着色', description: 'GeoJSON 按属性分色渲染，等间隔/分位数，SVG 预览', icon: '📊', category: '制图可视化', route: '/tools/choropleth', available: true },
+  { id: 'heatmap', name: '点密度热力图', description: 'Canvas 高斯核叠加渲染，半径/权重/色带可调', icon: '🔥', category: '制图可视化', route: '/tools/heatmap', available: true },
+  { id: 'contour', name: '等值线生成', description: 'Marching Squares 网格等值线追踪，SVG 预览', icon: '🏔️', category: '制图可视化', route: '/tools/contour', available: true },
+  { id: 'map-layout', name: '地图排版', description: '经纬网/比例尺/指北针/图例框 SVG 生成', icon: '📐', category: '制图可视化', route: '/tools/map-layout', available: true },
+  { id: 'tile-tools', name: '瓦片工具箱', description: '瓦片计算（XYZ/TMS 行列号）+ 需求估算（存储/耗时）', icon: '🔲', category: '制图可视化', route: '/tools/tile-tools', available: true },
+  { id: 'tile-downloader', name: '瓦片下载脚本', description: '按范围生成 wget 批量下载脚本，5 种底图源', icon: '⬇️', category: '制图可视化', route: '/tools/tile-downloader', available: true },
+
+  // === 三维/CIM ===
+  { id: 'cesium-camera', name: 'Cesium 相机参数', description: 'Cartesian3/heading/pitch/roll/setView 代码生成', icon: '📷', category: '三维/CIM', route: '/tools/cesium-camera', available: true },
+  { id: '3d-tiles-inspector', name: '3D Tiles 检查器', description: 'tileset.json 解析：层级/geometricError/boundingVolume', icon: '🏗️', category: '三维/CIM', route: '/tools/3d-tiles-inspector', available: true },
+  { id: 'czml-generator', name: 'CZML 生成器', description: 'CZML 文档生成：点/线/多边形/动态属性', icon: '📡', category: '三维/CIM', route: '/tools/czml-generator', available: true },
+  { id: 'gltf-info', name: 'glTF 元信息', description: 'glTF 2.0/glb 解析：网格/材质/纹理/节点/扩展', icon: '📦', category: '三维/CIM', route: '/tools/gltf-info', available: true },
+  { id: 'dem-tools', name: 'DEM 高程工具', description: '坡度坡向/高程统计/剖面插值/晕渲着色', icon: '⛰️', category: '三维/CIM', route: '/tools/dem-tools', available: true },
+  { id: 'ifc-parser', name: 'IFC 解析', description: 'IFC STEP 格式解析：版本/实体统计/属性集', icon: '🏢', category: '三维/CIM', route: '/tools/ifc-parser', available: true },
+  { id: 'citygml-parser', name: 'CityGML 解析', description: 'CityGML XML 解析：版本/building/LOD 分布', icon: '🏙️', category: '三维/CIM', route: '/tools/citygml-parser', available: true },
+  { id: 'pointcloud-info', name: '点云元信息', description: 'LAS/LAZ 二进制头解析：版本/点数/bbox/缩放', icon: '☁️', category: '三维/CIM', route: '/tools/pointcloud-info', available: true },
+  { id: 'building-volume', name: '建筑体积估算', description: '底面+层数层高 → 体积/表面积估算', icon: '🧱', category: '三维/CIM', route: '/tools/building-volume', available: true },
+
+  // === 地图服务 ===
+  { id: 'wms-capabilities', name: 'WMS Capabilities 解析', description: 'WMS GetCapabilities XML 解析：图层树/CRS/格式', icon: '🌐', category: '地图服务', route: '/tools/wms-capabilities', available: true },
+  { id: 'arcgis-rest', name: 'ArcGIS REST 探测', description: 'ArcGIS REST 端点 URL 构建：query/export/legend', icon: '🗺️', category: '地图服务', route: '/tools/arcgis-rest', available: true },
+  { id: 'tilejson', name: 'TileJSON 查看', description: 'TileJSON 解析与预览：tiles URL/bounds/zoom', icon: '📋', category: '地图服务', route: '/tools/tilejson', available: true },
+  { id: 'wms-url-builder', name: 'WMS/WMTS URL 构建', description: 'WMS GetMap + WMTS GetTile URL 构建器', icon: '🔗', category: '地图服务', route: '/tools/wms-url-builder', available: true },
+  { id: 'map-picker', name: '地图坐标拾取', description: 'Leaflet 地图点击拾取坐标（需联网）', icon: '📍', category: '地图服务', route: '/tools/map-picker', available: true },
+
+  // === 其他工具 ===
+  { id: 'base64', name: 'Base64 工具', description: 'Base64 ↔ 文本/文件双向编解码，Data URL 识别', icon: '🔐', category: '其他工具', route: '/tools/base64', available: true },
 ]
 
-const categories = ['全部', '格式转换', '数据处理', '坐标系统', '数据查看', '数据编辑']
+const categories = ['全部', '格式转换', '坐标系统', '空间分析', '数据处理', '制图可视化', '三维/CIM', '地图服务', '其他工具']
 const activeCategory = ref('全部')
 
 const filteredTools = computed(() => {
@@ -113,7 +151,7 @@ const handleToolClick = (tool: Tool) => {
         </p>
         <div class="hero-stats">
           <div class="stat-item">
-            <div class="stat-number">8+</div>
+            <div class="stat-number">60+</div>
             <div class="stat-label">在线工具</div>
           </div>
           <div class="stat-item">
