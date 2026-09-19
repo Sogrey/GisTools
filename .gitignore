@@ -53,3 +53,7 @@ GisTools/*.log
 GisTools/.env.local
 GisTools/.env.production
 
+
+# git-helper temp files
+.temp/
+
