@@ -17,11 +17,13 @@ interface Tool {
 const tools: Tool[] = [
   // === 格式转换 ===
   { id: 'shp-toolbox', name: 'SHP 工具箱', description: 'SHP ↔ GeoJSON 双向转换，含元信息提取，支持纯前端解析与后端转换', icon: '📊', category: '格式转换', route: '/tools/shp-toolbox', available: true },
+  { id: 'shp-to-dxf', name: '多 SHP → 单 DXF', description: '目录/ZIP 批量合并为单 DXF，一层一 shp，图层对照 CSV，可选投影/四七参数', icon: '🗂️', category: '格式转换', route: '/tools/shp-to-dxf', available: true },
   { id: 'table-convert', name: '表格转换工具', description: 'CSV/Excel ↔ GeoJSON 双向，自动识别经纬度列，支持度分秒与 BOM', icon: '📋', category: '格式转换', route: '/tools/table-convert', available: true },
   { id: 'geojson-toolbox', name: 'GeoJSON 工具箱', description: '校验 / 美化压缩 / 坐标纠偏 / 元数据四合一', icon: '✅', category: '格式转换', route: '/tools/geojson-toolbox', available: true },
   { id: 'kml-convert', name: 'KML 转换器', description: 'KML ↔ GeoJSON 双向转换，Placemark/几何/属性', icon: '🗺️', category: '格式转换', route: '/tools/kml-convert', available: true },
   { id: 'wkt-wkb', name: 'WKT/WKB 工具箱', description: 'WKT ↔ GeoJSON 与 WKB/EWKB ↔ GeoJSON 双向，全几何类型+SRID', icon: '🔤', category: '格式转换', route: '/tools/wkt-wkb', available: true },
   { id: 'dxf-tool', name: 'DXF 工具箱', description: 'DXF ↔ GeoJSON 双向转换，Point/Line/Polyline/Circle', icon: '📐', category: '格式转换', route: '/tools/dxf-tool', available: true },
+  { id: 'cad-to-gis', name: 'CAD → GIS', description: 'DXF→分层 GeoJSON：样式继承/炸块/曲线离散，Rust WASM 本地转换', icon: '🏗️', category: '格式转换', route: '/tools/cad-to-gis', available: true },
   { id: 'gpx-tool', name: 'GPX 工具箱', description: 'GPX ↔ GeoJSON 互转 + 轨迹统计（距离/爬升/速度）', icon: '🚴', category: '格式转换', route: '/tools/gpx-tool', available: true },
   { id: 'topojson-convert', name: 'TopoJSON 转换', description: 'TopoJSON ↔ GeoJSON 互转，共享弧段去重，量化精度可调', icon: '🔗', category: '格式转换', route: '/tools/topojson-convert', available: true },
   { id: 'polyline-codec', name: 'Polyline 编解码', description: 'Google Encoded Polyline 双向编解码，精度 5/6 位', icon: '〰️', category: '格式转换', route: '/tools/polyline-codec', available: true },
@@ -181,7 +183,7 @@ const handleToolClick = (tool: Tool) => {
     </section>
 
     <!-- 工具卡片网格 -->
-    <section class="tools-section">
+    <section id="tools" class="tools-section">
       <div class="tools-grid">
         <div
           v-for="tool in filteredTools"
@@ -235,33 +237,53 @@ const handleToolClick = (tool: Tool) => {
 
     <!-- 页脚 -->
     <footer class="footer">
+      <div class="footer-glow" aria-hidden="true"></div>
       <div class="footer-content">
-        <div class="footer-section">
-          <div class="footer-logo">
+        <div class="footer-brand">
+          <div class="logo footer-logo">
             <div class="logo-icon">GIS</div>
             <div class="logo-text">Tools</div>
           </div>
-          <p class="footer-desc">专业的在线 GIS 数据处理工具平台</p>
+          <p class="footer-desc">
+            专业的在线 GIS 数据处理工具平台<br>
+            格式转换 · 坐标系统 · 空间分析 · 一站搞定
+          </p>
+          <p class="footer-meta">纯本地运行 · 免费使用 · 无需注册</p>
         </div>
         <div class="footer-section">
           <h4 class="footer-title">快速链接</h4>
           <ul class="footer-links">
             <li><a href="#">首页</a></li>
-            <li><a href="#">工具</a></li>
+            <li><a href="#tools">工具</a></li>
             <li><a href="#">文档</a></li>
             <li><a href="#">关于我们</a></li>
           </ul>
         </div>
         <div class="footer-section">
           <h4 class="footer-title">联系方式</h4>
-          <ul class="footer-links">
-            <li><a href="#">GitHub</a></li>
-            <li><a href="#">Email</a></li>
+          <ul class="footer-links footer-contact">
+            <li>
+              <a href="#" class="footer-contact-link">
+                <svg class="footer-contact-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.454-1.155-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                </svg>
+                GitHub
+              </a>
+            </li>
+            <li>
+              <a href="#" class="footer-contact-link">
+                <svg class="footer-contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="14" rx="2"/>
+                  <path d="M3 7l9 6 9-6"/>
+                </svg>
+                Email
+              </a>
+            </li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; 2025 GIS Tools. All rights reserved.</p>
+        <p>&copy; 2026 GIS Tools. All rights reserved.</p>
       </div>
     </footer>
   </div>
@@ -768,67 +790,131 @@ const handleToolClick = (tool: Tool) => {
 
 /* 页脚 */
 .footer {
-  background: rgba(0, 0, 0, 0.3);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 4rem 2rem 2rem;
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(15, 15, 26, 0.2) 0%, rgba(0, 0, 0, 0.45) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4.5rem 2rem 2rem;
+  overflow: hidden;
+}
+
+.footer-glow {
+  position: absolute;
+  top: -120px;
+  left: 10%;
+  width: 320px;
+  height: 240px;
+  background: radial-gradient(ellipse, rgba(102, 126, 234, 0.18) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .footer-content {
+  position: relative;
   max-width: 1400px;
-  margin: 0 auto;
+  margin: 0 auto 3rem;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 3rem;
-  margin-bottom: 3rem;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: 3.5rem;
+  align-items: start;
 }
 
-.footer-section .footer-logo {
-  margin-bottom: 1rem;
+.footer-brand {
+  max-width: 360px;
+}
+
+.footer-logo {
+  margin-bottom: 1.25rem;
 }
 
 .footer-desc {
-  color: #a0a0a0;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  color: #a8a8b8;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+
+.footer-meta {
+  color: #7a7a8c;
+  font-size: 0.8125rem;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
 }
 
 .footer-title {
-  font-size: 1rem;
-  font-weight: 600;
+  position: relative;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
   margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
   color: #ffffff;
+}
+
+.footer-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 28px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .footer-links {
   list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .footer-links li {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 
 .footer-links a {
-  color: #a0a0a0;
+  color: #9a9aab;
   text-decoration: none;
-  font-size: 0.875rem;
-  transition: color 0.3s ease;
+  font-size: 0.9rem;
+  transition: color 0.25s ease, transform 0.25s ease;
+  display: inline-block;
 }
 
 .footer-links a:hover {
-  color: #667eea;
+  color: #a5b4fc;
+  transform: translateX(4px);
+}
+
+.footer-contact-link {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.footer-contact-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.75;
+  transition: opacity 0.25s ease;
+}
+
+.footer-contact-link:hover .footer-contact-icon {
+  opacity: 1;
 }
 
 .footer-bottom {
+  position: relative;
   max-width: 1400px;
   margin: 0 auto;
-  padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   text-align: center;
 }
 
 .footer-bottom p {
-  color: #606060;
-  font-size: 0.875rem;
+  color: #6b6b7a;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
 }
 
 /* 响应式设计 */
@@ -859,6 +945,15 @@ const handleToolClick = (tool: Tool) => {
 
   .features-grid {
     grid-template-columns: 1fr;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .footer-brand {
+    max-width: none;
   }
 }
 </style>

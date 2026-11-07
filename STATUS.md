@@ -1,6 +1,6 @@
 # GisTools 开发状态
 
-> 更新日期：2026-09-19
+> 更新日期：2026-11-08
 > 当前版本：前端 0.0.0（开发期）
 
 ## 总体进度
@@ -14,16 +14,17 @@
 | 算法底座去重（geo-math/coord-transform）    | ✅ 完成 | 2026-09-19 |
 | 类型债务清偿（1424 → 0）                    | ✅ 完成 | 2026-09-19 |
 | 文档更新（README/STATUS/MIGRATION\_PLAN） | ✅ 完成 | 2026-09-19 |
+| CAD→GIS（Rust WASM：样式继承/炸块）          | ✅ 完成 | 2026-11-08 |
 
 ## 质量指标（当前）
 
 | 指标                | 数值               |
 | ----------------- | ---------------- |
-| 工具组件              | 59 个（+ HomeView） |
-| TS 工具模块           | 60 个             |
-| 路由                | 60 条（首页 + 59 工具） |
+| 工具组件              | 61 个（+ HomeView） |
+| TS 工具模块           | 62 个             |
+| 路由                | 62 条（首页 + 61 工具） |
 | TypeScript 严格模式错误 | **0**（曾 1424）    |
-| vite build        | ✅ 通过（约 5s）       |
+| vite build        | ✅ 通过             |
 | 白底样式残留            | 0 处              |
 | 孤立模块/死链路由         | 0 处              |
 
@@ -31,7 +32,7 @@
 
 | 分类     | 数量 | 说明                                                              |
 | ------ | -- | --------------------------------------------------------------- |
-| 格式转换   | 11 | SHP/表格/GeoJSON/KML/WKT-WKB/DXF/GPX/TopoJSON/Polyline/GeoBuf/OSM |
+| 格式转换   | 13 | SHP/多SHP→DXF/表格/GeoJSON/KML/WKT-WKB/DXF/CAD→GIS/GPX/TopoJSON/Polyline/GeoBuf/OSM |
 | 坐标系统   | 7  | 工作台/投影带/EPSG/七参数/清洗/投影变换/比例尺                                    |
 | 空间分析   | 10 | 叠加/Voronoi/凸包/最近邻/距离矩阵/H3S2/缓冲区/GeoHash/重采样/综合                  |
 | 数据处理   | 8  | 合并/分片/VWS/字段计算/溶解/展平/拓扑/图幅                                      |
@@ -111,6 +112,7 @@
 | GeoJSON→SHP / CSV→SHP   | 仅后端模式（GDAL），纯前端 SHP **写出**未实现   |
 | 地图坐标拾取                  | 需联网加载 Leaflet + OSM 瓦片          |
 | WMS Capabilities URL 拉取 | 受浏览器 CORS 限制，以粘贴 XML 为主         |
+| 多 SHP → 单 DXF           | 输出为 DXF（非真 DWG）；CRS 为常用投影/四七参数，非全量 `proj.db` |
 
 ## 后续规划（建议优先级）
 
@@ -123,6 +125,7 @@
 ### P2（体验优化）
 
 * [ ] 大文件性能：>50MB GeoJSON 的分片/转换改用 Web Worker，避免卡 UI
+* [ ] **多 SHP→DXF 性能门控**：实测约 >10 万要素卡顿时，将 parse/write 抽到 Rust/WASM Worker；真 DWG / 全量 EPSG 再评估后端 `ezdxf` + ODA
 * [ ] 工具页最近使用记录（localStorage），首页常用工具置顶
 * [ ] 暗色/浅色主题切换
 

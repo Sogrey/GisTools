@@ -350,7 +350,13 @@ export function parseSHP(buf: ArrayBuffer): ShpResult {
     } else if (baseType === 1) {
       const x = dv.getFloat64(offset + 4, true)
       const y = dv.getFloat64(offset + 12, true)
-      geometry = { type: 'Point', coordinates: [x, y] }
+      // PointZ (11): X Y Z M；PointM (21): X Y M —— 有 Z 时写入第三维
+      if (recShapeType === 11 && offset + 28 <= buf.byteLength) {
+        const z = dv.getFloat64(offset + 20, true)
+        geometry = { type: 'Point', coordinates: [x, y, z] }
+      } else {
+        geometry = { type: 'Point', coordinates: [x, y] }
+      }
     } else if (baseType === 3 || baseType === 5) {
       const numParts = dv.getInt32(offset + 36, true)
       const numPoints = dv.getInt32(offset + 40, true)
@@ -372,6 +378,17 @@ export function parseSHP(buf: ArrayBuffer): ShpResult {
             dv.getFloat64(pointsStart + i * 16, true),
             dv.getFloat64(pointsStart + i * 16 + 8, true)
           ])
+        }
+
+        // PolyLineZ(13)/PolygonZ(15): XY 后为 Zmin/Zmax + Z[]（可选再跟 M）
+        const isZ = recShapeType === 13 || recShapeType === 15
+        if (isZ) {
+          const zArrayStart = pointsStart + numPoints * 16 + 16 // skip Zmin/Zmax
+          if (zArrayStart + numPoints * 8 <= offset + contentBytes) {
+            for (let i = 0; i < numPoints; i++) {
+              points[i]!.push(dv.getFloat64(zArrayStart + i * 8, true))
+            }
+          }
         }
 
         const coords: number[][][] = []
@@ -402,6 +419,15 @@ export function parseSHP(buf: ArrayBuffer): ShpResult {
           dv.getFloat64(pointsStart + i * 16, true),
           dv.getFloat64(pointsStart + i * 16 + 8, true)
         ])
+      }
+      // MultiPointZ (18)
+      if (recShapeType === 18) {
+        const zArrayStart = pointsStart + numPoints * 16 + 16
+        if (zArrayStart + numPoints * 8 <= offset + contentBytes) {
+          for (let i = 0; i < numPoints; i++) {
+            coords[i]!.push(dv.getFloat64(zArrayStart + i * 8, true))
+          }
+        }
       }
       geometry = { type: 'MultiPoint', coordinates: coords }
     } else {

@@ -1,19 +1,21 @@
 # GisTools - GIS 工具箱
 
-基于 Vue 3 + TypeScript + FastAPI 的在线 GIS 数据处理工具平台，**59 个工具组件**，覆盖格式转换、坐标系统、空间分析、数据处理、制图可视化、三维/CIM、地图服务七大领域。绝大部分工具**纯前端本地运行**，数据不出浏览器。
+基于 Vue 3 + TypeScript + FastAPI 的在线 GIS 数据处理工具平台，**61 个工具组件**，覆盖格式转换、坐标系统、空间分析、数据处理、制图可视化、三维/CIM、地图服务七大领域。绝大部分工具**纯前端本地运行**，数据不出浏览器。
 
-## 工具总览（59 个）
+## 工具总览（61 个）
 
-### 格式转换（11 个）
+### 格式转换（13 个）
 
 | 工具           | 路由                        | 说明                                                       |
 | ------------ | ------------------------- | -------------------------------------------------------- |
 | SHP 工具箱      | `/tools/shp-toolbox`      | SHP ↔ GeoJSON 双向，元信息提取，纯前端解析 + 后端转换双模式                   |
+| 多 SHP → 单 DXF | `/tools/shp-to-dxf`       | 目录/ZIP 批量合并为单 DXF，一层一 shp，图层对照 CSV，可选投影/四七参数（非真 DWG）   |
 | 表格转换工具       | `/tools/table-convert`    | 表→GeoJSON / GeoJSON→CSV / Excel→JSON 三标签页，自动识别经纬度列，支持度分秒 |
 | GeoJSON 工具箱  | `/tools/geojson-toolbox`  | 校验（RFC 7946，行号定位）/ 美化压缩 / 元数据                            |
 | KML 转换器      | `/tools/kml-convert`      | KML ↔ GeoJSON 双向                                         |
 | WKT/WKB 工具箱  | `/tools/wkt-wkb`          | WKT ↔ GeoJSON、WKB/EWKB ↔ GeoJSON，全几何类型 + SRID            |
 | DXF 工具箱      | `/tools/dxf-tool`         | DXF ↔ GeoJSON 双向，Point/Line/Polyline/Circle              |
+| CAD → GIS    | `/tools/cad-to-gis`       | DXF→分层 GeoJSON：样式继承/炸块/曲线离散，Rust WASM，数据不出浏览器           |
 | GPX 工具箱      | `/tools/gpx-tool`         | GPX ↔ GeoJSON 互转 + 轨迹统计（距离/爬升/速度）                        |
 | TopoJSON 转换  | `/tools/topojson-convert` | TopoJSON ↔ GeoJSON，共享弧段去重                                |
 | Polyline 编解码 | `/tools/polyline-codec`   | Google Encoded Polyline 双向，精度 5/6 位                      |
@@ -108,15 +110,19 @@
 ```
 GisTools/
 ├── src/                       # Vue 3 前端
-│   ├── views/                # 60 个组件（HomeView + 59 个工具页）
-│   ├── utils/                # 60 个 TS 工具模块（纯函数算法库）
-│   │   ├── geo-math.ts      # 共享数学底座（haversine/球面面积）
+│   ├── views/                # 62 个组件（HomeView + 61 个工具页）
+│   ├── utils/                # TS 工具模块（纯函数算法库）+ WASM 封装
+│   │   ├── geo-math.ts       # 共享数学底座（haversine/球面面积）
 │   │   ├── coord-transform.ts # 共享纠偏公式（GCJ02/BD09）
+│   │   ├── cad-to-gis.ts     # CAD→GIS WASM 加载与预览
 │   │   └── ...               # 各工具核心算法
-│   ├── router/               # 60 条路由
+│   ├── router/
 │   └── assets/
 │       ├── main.css
 │       └── tool-common.css   # 工具页公共深色科技风样式
+├── wasm/cad-to-gis/           # CAD→GIS Rust WASM（DXF 解析 / 炸块 / 样式）
+│   ├── src/                  # Rust 源码
+│   └── pkg/                  # 预构建 wasm + JS 胶水（可直接运行）
 ├── GisTools/                  # Python 后端（FastAPI + GDAL，可选）
 │   ├── app/
 │   │   ├── core/            # 核心配置
@@ -138,7 +144,7 @@ pnpm run dev
 # 打开 http://localhost:5173
 ```
 
-> 59 个工具中仅 SHP 工具箱的"后端转换"模式需要 FastAPI；纯前端解析模式无需后端。
+> 绝大多数工具纯前端即可；仅 SHP 工具箱的「后端转换」模式需要 FastAPI。
 
 ### 前端 + 后端（SHP 后端转换、GeoJSON→SHP 需要）
 
@@ -156,15 +162,20 @@ pnpm run dev:all
 
 ```bash
 pnpm run type-check   # vue-tsc 类型检查（当前 0 错误）
-pnpm run build        # 生产构建
+pnpm run build        # 生产构建（已含预构建 WASM）
+pnpm run build:wasm   # 仅在修改 wasm/cad-to-gis Rust 源码后需要
 pnpm run lint         # ESLint
 ```
+
+> **CI / GitHub Pages**：`wasm/cad-to-gis/pkg/` 与 `Cargo.lock` 随仓库提交。现有 `.github/workflows/deploy.yml` **不必**再装 Rust / 单独构建 WASM；`npm run build` 会直接打包预构建产物。仅当改了 `wasm/cad-to-gis/src` 时，本地执行 `pnpm run build:wasm` 后把更新后的 `pkg/` 一并提交即可。
+>
+> **WASM 校验**：`.github/workflows/wasm-check.yml` 仅在 `wasm/**`（或该 workflow 自身）变更时触发，跑 `cargo test --locked` + `node smoke.mjs`，不重编 `pkg/`，也不阻塞无关前端改动的 Pages 部署。
 
 ## 架构说明
 
 ### 前后端职责划分
 
-* **纯前端**（59 个工具默认模式）：所有算法在浏览器本地执行，零上传、零依赖，数据不出设备
+* **纯前端**（默认模式）：所有算法在浏览器本地执行，零上传、零依赖，数据不出设备
 * **后端增强**（可选）：SHP/GeoJSON 转换的 GDAL 精确实现，仅 SHP 工具箱提供切换入口
 * **共享底座**：`geo-math.ts`（9 处 Haversine 收敛为 1）、`coord-transform.ts`（3 处纠偏公式收敛为 1）、`tile-tools.ts`（瓦片坐标唯一实现）
 
@@ -176,7 +187,7 @@ pnpm run lint         # ESLint
 
 ## 开发状态
 
-详见 [STATUS.md](STATUS.md)。当前进度：**59/59 工具完成**，类型检查零错误，构建通过。
+详见 [STATUS.md](STATUS.md)。当前进度：**60 工具完成**（含多 SHP→单 DXF），类型检查零错误，构建通过。
 
 ## 相关文档
 

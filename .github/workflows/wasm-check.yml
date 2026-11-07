@@ -1,0 +1,45 @@
+# 仅在 wasm/** 变更时校验 Rust 逻辑；不参与 Pages 部署，也不在 CI 里重编 pkg/
+name: WASM Check
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "wasm/**"
+      - ".github/workflows/wasm-check.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "wasm/**"
+      - ".github/workflows/wasm-check.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: wasm-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cargo-test:
+    name: cargo test (cad-to-gis)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: wasm/cad-to-gis
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: wasm/cad-to-gis -> target
+
+      - name: Cargo test
+        run: cargo test --locked
+
+      - name: Node smoke (prebuilt pkg)
+        run: node smoke.mjs

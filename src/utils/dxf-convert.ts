@@ -365,12 +365,12 @@ function writeBlocks(): string {
   return '0\nSECTION\n2\nBLOCKS\n0\nENDSEC\n'
 }
 
-function writePoint(x: number, y: number, layer: string): string {
+function writePoint(x: number, y: number, layer: string, z = 0): string {
   let s = '0\nPOINT\n'
   s += dxfPair('8', layer)
   s += dxfPair('10', x)
   s += dxfPair('20', y)
-  s += dxfPair('30', 0.0)
+  s += dxfPair('30', z)
   return s
 }
 
@@ -386,36 +386,190 @@ function writeLwPolyline(coords: Coord[], closed: boolean, layer: string): strin
   return s
 }
 
-export function geomToDxf(geometry: any, layer: string): string[] {
+/** 3D POLYLINE：有 Z 变化时用，避免塌成平面 */
+function writePolyline3d(coords: Coord[], closed: boolean, layer: string): string {
+  let s = '0\nPOLYLINE\n'
+  s += dxfPair('8', layer)
+  s += dxfPair('66', 1)
+  s += dxfPair('70', (closed ? 1 : 0) | 8) // bit 3 = 3D polyline
+  for (const c of coords) {
+    s += '0\nVERTEX\n'
+    s += dxfPair('8', layer)
+    s += dxfPair('10', c[0])
+    s += dxfPair('20', c[1])
+    s += dxfPair('30', c[2] ?? 0)
+    s += dxfPair('70', 32) // 3D polyline vertex
+  }
+  s += '0\nSEQEND\n'
+  s += dxfPair('8', layer)
+  return s
+}
+
+function writeText(x: number, y: number, z: number, layer: string, text: string, height: number): string {
+  let s = '0\nTEXT\n'
+  s += dxfPair('8', layer)
+  s += dxfPair('10', x)
+  s += dxfPair('20', y)
+  s += dxfPair('30', z)
+  s += dxfPair('40', height)
+  s += dxfPair('1', text)
+  return s
+}
+
+function coordHasZ(coords: Coord[]): boolean {
+  for (const c of coords) {
+    if (c.length >= 3 && c[2] !== undefined && c[2] !== 0) return true
+  }
+  return false
+}
+
+function writeLineLike(coords: Coord[], closed: boolean, layer: string): string {
+  if (coordHasZ(coords)) return writePolyline3d(coords, closed, layer)
+  return writeLwPolyline(coords, closed, layer)
+}
+
+export interface GeomToDxfOptions {
+  /** 注记字高（图纸单位） */
+  textHeight?: number
+  /** 是否把属性中的注记字段写成 TEXT（点要素） */
+  writeAnnotationText?: boolean
+}
+
+const ANNO_KEYS = ['TEXT', 'TEXT_', 'NAME', 'LABEL', 'ANNO', 'ANNOTATION', '注记', '名称', 'NAME_CHN']
+const ELEV_KEYS = ['ELEVATION', 'ELEV', 'HEIGHT', 'Z', '高程', 'H']
+
+function pickProp(props: Record<string, unknown> | null | undefined, keys: string[]): string | null {
+  if (!props) return null
+  for (const k of keys) {
+    if (props[k] !== undefined && props[k] !== null && String(props[k]).trim() !== '') {
+      return String(props[k]).trim()
+    }
+  }
+  // case-insensitive fallback
+  const lowerMap: Record<string, unknown> = {}
+  for (const key of Object.keys(props)) lowerMap[key.toUpperCase()] = props[key]
+  for (const k of keys) {
+    const v = lowerMap[k.toUpperCase()]
+    if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim()
+  }
+  return null
+}
+
+export function geomToDxf(geometry: any, layer: string, props?: Record<string, unknown> | null, options?: GeomToDxfOptions): string[] {
   const entities: string[] = []
   if (!geometry || !geometry.type) return entities
   const type = geometry.type
   const c = geometry.coordinates
+  const textHeight = options?.textHeight ?? 2.5
+  const writeAnno = options?.writeAnnotationText !== false
 
   if (type === 'Point') {
-    entities.push(writePoint(c[0], c[1], layer))
+    const z = c[2] ?? 0
+    entities.push(writePoint(c[0], c[1], layer, z))
+    if (writeAnno) {
+      const anno = pickProp(props, ANNO_KEYS)
+      const elev = pickProp(props, ELEV_KEYS)
+      const label = anno || elev
+      if (label) entities.push(writeText(c[0], c[1], z, layer, label, textHeight))
+    }
   } else if (type === 'MultiPoint') {
-    for (const p of c) entities.push(writePoint(p[0], p[1], layer))
+    for (const p of c) {
+      const z = p[2] ?? 0
+      entities.push(writePoint(p[0], p[1], layer, z))
+      if (writeAnno) {
+        const anno = pickProp(props, ANNO_KEYS)
+        const elev = pickProp(props, ELEV_KEYS)
+        const label = anno || elev
+        if (label) entities.push(writeText(p[0], p[1], z, layer, label, textHeight))
+      }
+    }
   } else if (type === 'LineString') {
-    entities.push(writeLwPolyline(c, false, layer))
+    entities.push(writeLineLike(c, false, layer))
   } else if (type === 'MultiLineString') {
-    for (const line of c) entities.push(writeLwPolyline(line, false, layer))
+    for (const line of c) entities.push(writeLineLike(line, false, layer))
   } else if (type === 'Polygon') {
-    for (const ring of c) entities.push(writeLwPolyline(ring, true, layer))
+    for (const ring of c) entities.push(writeLineLike(ring, true, layer))
   } else if (type === 'MultiPolygon') {
     for (const poly of c) {
-      for (const ring of poly) entities.push(writeLwPolyline(ring, true, layer))
+      for (const ring of poly) entities.push(writeLineLike(ring, true, layer))
     }
   } else if (type === 'GeometryCollection') {
     for (const g of (geometry.geometries || [])) {
-      const sub = geomToDxf(g, layer)
+      const sub = geomToDxf(g, layer, props, options)
       entities.push(...sub)
     }
   }
   return entities
 }
 
-export function geojsonToDxf(geojson: any): GeojsonToDxfResult {
+/** CAD 图层名：去掉非法字符，空名回退 */
+export function sanitizeDxfLayerName(name: string, fallback = 'LAYER'): string {
+  const cleaned = name
+    .replace(/[<>/\\":;?*|=`]/g, '_')
+    .replace(/\s+/g, '_')
+    .trim()
+  if (!cleaned) return fallback
+  return cleaned.length > 255 ? cleaned.slice(0, 255) : cleaned
+}
+
+export interface LayeredGeojsonInput {
+  layerName: string
+  geojson: any
+}
+
+export interface MultiLayerDxfOptions extends GeomToDxfOptions {
+  defaultLayer?: string
+}
+
+/**
+ * 多个 GeoJSON（各对应一个 CAD 图层）合并写出单个 DXF
+ */
+export function geojsonLayersToDxf(
+  layers: LayeredGeojsonInput[],
+  options?: MultiLayerDxfOptions,
+): GeojsonToDxfResult {
+  const defaultLayer = options?.defaultLayer || 'GIS_LAYER'
+  const layerSet: Record<string, boolean> = {}
+  const prepared: { layer: string; features: any[] }[] = []
+
+  for (const item of layers) {
+    const layer = sanitizeDxfLayerName(item.layerName || defaultLayer, defaultLayer)
+    layerSet[layer] = true
+    let features: any[]
+    const gj = item.geojson
+    if (!gj) features = []
+    else if (gj.type === 'FeatureCollection') features = gj.features || []
+    else if (gj.type === 'Feature') features = [gj]
+    else features = [{ type: 'Feature', geometry: gj, properties: {} }]
+    prepared.push({ layer, features })
+  }
+
+  const layerNames = Object.keys(layerSet)
+  if (layerNames.length === 0) layerNames.push(defaultLayer)
+
+  let dxf = ''
+  dxf += writeHeader()
+  dxf += writeTables(layerNames)
+  dxf += writeBlocks()
+
+  dxf += '0\nSECTION\n2\nENTITIES\n'
+  let entityCount = 0
+  for (const block of prepared) {
+    for (const f of block.features) {
+      if (!f || !f.geometry) continue
+      const ents = geomToDxf(f.geometry, block.layer, f.properties || {}, options)
+      for (const e of ents) {
+        dxf += e
+        entityCount++
+      }
+    }
+  }
+  dxf += '0\nENDSEC\n'
+  dxf += '0\nEOF\n'
+  return { dxf, entityCount, layerCount: layerNames.length }
+}
+
+export function geojsonToDxf(geojson: any, options?: GeomToDxfOptions): GeojsonToDxfResult {
   let features: any[]
   if (geojson.type === 'FeatureCollection') features = geojson.features
   else if (geojson.type === 'Feature') features = [geojson]
@@ -423,7 +577,7 @@ export function geojsonToDxf(geojson: any): GeojsonToDxfResult {
 
   const layerSet: Record<string, boolean> = {}
   for (const f of features) {
-    const ln = (f.properties && f.properties.layer) || 'GIS_LAYER'
+    const ln = sanitizeDxfLayerName((f.properties && f.properties.layer) || 'GIS_LAYER')
     layerSet[ln] = true
   }
   const layerNames = Object.keys(layerSet)
@@ -436,8 +590,8 @@ export function geojsonToDxf(geojson: any): GeojsonToDxfResult {
   dxf += '0\nSECTION\n2\nENTITIES\n'
   let entityCount = 0
   for (const f of features) {
-    const layer = (f.properties && f.properties.layer) || 'GIS_LAYER'
-    const ents = geomToDxf(f.geometry, layer)
+    const layer = sanitizeDxfLayerName((f.properties && f.properties.layer) || 'GIS_LAYER')
+    const ents = geomToDxf(f.geometry, layer, f.properties || {}, options)
     for (const e of ents) { dxf += e; entityCount++ }
   }
   dxf += '0\nENDSEC\n'

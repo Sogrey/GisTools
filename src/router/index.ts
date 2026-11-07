@@ -30,6 +30,11 @@ const router = createRouter({
       component: () => import('../views/DxfToolView.vue').then(m => m.default),
     },
     {
+      path: '/tools/cad-to-gis',
+      name: 'cad-to-gis',
+      component: () => import('../views/CadToGisView.vue').then(m => m.default),
+    },
+    {
       path: '/tools/gpx-tool',
       name: 'gpx-tool',
       component: () => import('../views/GpxToolView.vue').then(m => m.default),
@@ -43,6 +48,11 @@ const router = createRouter({
       path: '/tools/shp-toolbox',
       name: 'shp-toolbox',
       component: () => import('../views/ShpToolView.vue').then(m => m.default),
+    },
+    {
+      path: '/tools/shp-to-dxf',
+      name: 'shp-to-dxf',
+      component: () => import('../views/ShpToDxfView.vue').then(m => m.default),
     },
     {
       path: '/tools/topojson-convert',

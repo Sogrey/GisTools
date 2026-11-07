@@ -57,3 +57,7 @@ GisTools/.env.production
 # git-helper temp files
 .temp/
 
+# Rust / WASM build artifacts (keep pkg/ + Cargo.lock committed so CI/Pages need no Rust)
+wasm/**/target/
+wasm/**/pkg/.gitignore
+
